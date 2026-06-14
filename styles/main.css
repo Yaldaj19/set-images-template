@@ -120,6 +120,39 @@ body {
   font-weight: 700;
 }
 
+/* ============ Top tool navigation (pill switcher) ============ */
+.tool-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  color: var(--text-muted-light);
+  text-decoration: none;
+  transition: all .25s ease;
+  white-space: nowrap;
+}
+[data-theme="dark"] .tool-nav-btn { color: var(--text-muted-dark); }
+.tool-nav-btn:hover {
+  color: var(--text-light);
+  background: rgba(6, 212, 255, 0.08);
+}
+[data-theme="dark"] .tool-nav-btn:hover {
+  color: var(--text-dark);
+  background: rgba(6, 212, 255, 0.12);
+}
+.tool-nav-btn.active {
+  background: linear-gradient(135deg, var(--c-cyan), var(--c-cyan-deep));
+  color: #05060e !important;
+  box-shadow: 0 2px 12px rgba(6, 212, 255, 0.45);
+  font-weight: 700;
+}
+.tool-nav-btn svg { flex-shrink: 0; }
+@media (max-width: 640px) {
+  .tool-nav-btn { padding: 6px 10px; }
+  .tool-nav-btn span { font-size: 11px; }
+}
+
 /* ============ Step labels ============ */
 .step-label {
   display: flex;

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#05060e" />
+
+  <title data-i18n="opt.title">بهینه‌ساز تصویر</title>
+  <meta name="description" content="ابزار آنلاین و رایگان برای فشرده‌سازی، تبدیل فرمت و تغییر ابعاد تصاویر — بدون افت کیفیت و کاملاً محلی در مرورگر." />
+
+  <link rel="icon" href="../assets/favicon.ico" />
+
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="بهینه‌ساز تصویر" />
+  <meta property="og:description" content="فشرده‌سازی و تبدیل فرمت تصاویر بدون افت کیفیت — کاملاً محلی در مرورگر." />
+  <meta property="og:locale" content="fa_IR" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta name="twitter:card" content="summary" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "بهینه‌ساز تصویر",
+    "alternateName": "Image Optimizer",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Any modern web browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "فشرده‌سازی، تبدیل فرمت و تغییر ابعاد تصاویر کاملاً محلی در مرورگر.",
+    "inLanguage": ["fa", "en"]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="../fonts/fonts.css?v=20260614e" />
+
+  <!-- Critical CSS: prevents FOUC when Tailwind CDN is still loading -->
+  <style>
+    .hidden { display: none !important; }
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important; height: 1px !important;
+      padding: 0 !important; margin: -1px !important;
+      overflow: hidden !important; clip: rect(0,0,0,0) !important;
+      white-space: nowrap !important; border: 0 !important;
+    }
+  </style>
+
+  <script src="../vendor/tailwind-3.4.17.js?v=20260614e"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Vazirmatn', 'system-ui', 'sans-serif'],
+            fa: ['Vazirmatn', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            cyan: {
+              soft: '#22e0ff',
+              DEFAULT: '#06d4ff',
+              deep: '#0891b2'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="../styles/main.css?v=20260614e" />
+  <link rel="stylesheet" href="optimizer.css?v=20260614e" />
+  <script defer src="../vendor/jszip-3.10.1.min.js?v=20260614e"></script>
+</head>
+
+<body class="font-sans antialiased min-h-screen selection:bg-cyan/30">
+
+  <div class="fixed inset-0 -z-10 bg-gradient-mesh pointer-events-none"></div>
+  <div class="fixed inset-0 -z-10 bg-noise opacity-[0.02] pointer-events-none"></div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="glass-header sticky top-0 z-40">
+    <div class="container mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-3">
+      <div class="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 min-w-0 basis-full sm:basis-auto">
+        <div class="logo-mark shrink-0">
+          <img src="../assets/Set-Images-template-logo.webp" alt="" width="44" height="44" />
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-xl font-bold leading-tight truncate" data-i18n="opt.name">بهینه‌ساز تصویر</h1>
+          <p class="text-[11px] sm:text-xs text-muted leading-none hidden sm:block" data-i18n="opt.tagline">فشرده‌سازی و تبدیل فرمت بدون افت کیفیت</p>
+        </div>
+      </div>
+
+      <nav class="tool-nav glass-pill flex items-center gap-1 p-1 text-[11px] sm:text-xs font-semibold basis-full sm:basis-auto justify-center order-3 sm:order-2" aria-label="Tools">
+        <a href="../" class="tool-nav-btn">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <path d="M3 16l5-5 4 4 4-4 5 5"/>
+            <circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+          <span data-i18n="nav.placement">جایگذاری قالب</span>
+        </a>
+        <a href="./" class="tool-nav-btn active" aria-current="page">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            <path d="M3 12h4l3-8 4 16 3-8h4"/>
+          </svg>
+          <span data-i18n="nav.optimizer">بهینه‌ساز تصویر</span>
+        </a>
+      </nav>
+
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 basis-full sm:basis-auto justify-center sm:justify-end order-2 sm:order-3">
+        <div class="glass-pill flex items-center gap-1 p-1 text-[11px] sm:text-xs font-semibold">
+          <button data-lang-btn="fa" class="lang-btn px-2 sm:px-2.5 py-1 rounded-full">فا</button>
+          <button data-lang-btn="en" class="lang-btn px-2 sm:px-2.5 py-1 rounded-full">EN</button>
+        </div>
+        <button id="theme-toggle" class="glass-pill w-9 h-9 flex items-center justify-center" aria-label="Toggle theme">
+          <svg class="w-4 h-4 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="w-4 h-4 block dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="opt-input" accept="image/*" class="sr-only" />
+  <input type="file" id="opt-batch-input" accept="image/*" multiple class="sr-only" />
+
+  <main class="container mx-auto px-3 sm:px-6 py-6 sm:py-8 max-w-7xl">
+
+    <!-- ============ HERO ============ -->
+    <section id="opt-hero" class="text-center mb-7 sm:mb-10">
+      <h2 class="text-2xl sm:text-4xl font-extrabold mb-2 sm:mb-3 text-gradient-brand" data-i18n="opt.hero.title">
+        تصویر رو کوچیک کن، کیفیت رو نگه دار
+      </h2>
+      <p class="text-xs sm:text-base text-muted max-w-2xl mx-auto px-2" data-i18n="opt.hero.subtitle">
+        تصویرت رو بنداز اینجا، فرمت دلخواه رو انتخاب کن، و یک نسخه‌ی سبک‌تر بگیر — کاملاً محلی، بدون آپلود به سرور.
+      </p>
+    </section>
+
+    <!-- ============ EMPTY STATE — two entry cards ============ -->
+    <section id="opt-empty-state" class="mb-6">
+      <div class="opt-mode-grid">
+
+        <!-- Single image card -->
+        <div id="opt-drop" class="glass-card drop-zone opt-mode-card group" tabindex="0" role="button" aria-label="Select single image">
+          <div class="drop-empty">
+            <div class="icon-bubble">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="9" cy="9" r="2"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </div>
+            <p class="font-semibold text-sm sm:text-base" data-i18n="opt.mode.single.title">یک تصویر</p>
+            <p class="text-[11px] sm:text-xs text-muted mt-1 px-2" data-i18n="opt.mode.single.hint">مقایسه قبل/بعد با zoom و دانلود تکی</p>
+          </div>
+        </div>
+
+        <!-- Batch images card -->
+        <div id="opt-batch-drop" class="glass-card drop-zone opt-mode-card group" tabindex="0" role="button" aria-label="Select multiple images">
+          <div class="drop-empty">
+            <div class="icon-bubble">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="14" height="14" rx="2"/>
+                <path d="M7 7h14v14H7"/>
+              </svg>
+            </div>
+            <p class="font-semibold text-sm sm:text-base" data-i18n="opt.mode.batch.title">دسته‌ای</p>
+            <p class="text-[11px] sm:text-xs text-muted mt-1 px-2" data-i18n="opt.mode.batch.hint">چندتا با هم — خروجی ZIP (تا ۵۰ تصویر)</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ WORKSPACE (hidden until image loaded) ============ -->
+    <section id="opt-workspace" class="hidden">
+
+      <!-- ============ STEP 1: SETTINGS ============ -->
+      <div class="step-label">
+        <span class="step-num">۱</span>
+        <span data-i18n="opt.step.settings">تنظیمات خروجی</span>
+        <button id="opt-reset" class="btn-ghost text-xs ms-auto" data-i18n="opt.settings.reset">انتخاب تصویر دیگر</button>
+      </div>
+
+      <div class="glass-card p-4 sm:p-5 mb-5 sm:mb-6">
+        <div class="settings-grid">
+
+          <!-- Codec -->
+          <div>
+            <label for="opt-codec" class="block text-sm font-semibold mb-2" data-i18n="opt.codec.label">فرمت خروجی</label>
+            <select id="opt-codec" class="glass-select">
+              <option value="webp" data-i18n-option="opt.codec.webp">WebP — فشرده‌سازی هوشمند (پیشنهادی)</option>
+              <option value="jpeg" data-i18n-option="opt.codec.jpeg">JPEG — مرورگر</option>
+              <option value="png" data-i18n-option="opt.codec.png">PNG — مرورگر (lossless)</option>
+              <option value="avif" data-i18n-option="opt.codec.avif">AVIF — بهترین فشرده‌سازی</option>
+            </select>
+          </div>
+
+          <!-- Quality slider -->
+          <div id="opt-quality-row">
+            <label for="opt-quality" class="block text-sm font-semibold mb-2">
+              <span data-i18n="opt.quality.label">کیفیت</span>
+              <span class="opt-quality-meta">
+                <span id="opt-quality-val" class="text-cyan font-extrabold">75</span>
+              </span>
+            </label>
+            <input id="opt-quality" type="range" min="1" max="100" value="75" class="opt-range" />
+          </div>
+
+          <!-- Resize -->
+          <div>
+            <label class="block text-sm font-semibold mb-2" data-i18n="opt.resize.label">تغییر ابعاد (اختیاری)</label>
+            <div class="opt-resize-row">
+              <input id="opt-resize-w" type="number" placeholder="W" class="glass-select opt-resize-input" />
+              <span class="opt-resize-x">×</span>
+              <input id="opt-resize-h" type="number" placeholder="H" class="glass-select opt-resize-input" />
+              <label class="opt-resize-lock">
+                <input id="opt-resize-lock" type="checkbox" checked />
+                <span data-i18n="opt.resize.lock">حفظ نسبت</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============ STEP 2: COMPARE ============ -->
+      <div class="step-label">
+        <span class="step-num">۲</span>
+        <span data-i18n="opt.step.compare">مقایسه</span>
+        <span id="opt-savings-pill" class="step-badge hidden">—</span>
+      </div>
+
+      <div class="opt-grid mb-5 sm:mb-6">
+
+        <!-- Original -->
+        <div class="opt-pane glass-card">
+          <div class="opt-pane-header">
+            <span class="opt-pane-tag" data-i18n="opt.pane.original">اصل</span>
+            <span id="opt-original-info" class="opt-pane-info">—</span>
+          </div>
+          <div id="opt-original-canvas" class="opt-pane-canvas">
+            <img id="opt-original-img" alt="" draggable="false" />
+          </div>
+        </div>
+
+        <!-- Compressed -->
+        <div class="opt-pane glass-card">
+          <div class="opt-pane-header">
+            <span class="opt-pane-tag opt-pane-tag-accent" data-i18n="opt.pane.compressed">فشرده‌شده</span>
+            <span id="opt-compressed-info" class="opt-pane-info">—</span>
+          </div>
+          <div id="opt-compressed-canvas" class="opt-pane-canvas">
+            <img id="opt-compressed-img" alt="" draggable="false" />
+            <div id="opt-compressed-placeholder" class="opt-pane-empty">
+              <span data-i18n="opt.pane.compressing">در حال پردازش…</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Zoom controls (synced between both panes) -->
+      <div class="opt-zoom-bar">
+        <button type="button" id="opt-zoom-out" class="opt-zoom-btn" aria-label="Zoom out" title="Zoom out">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+        </button>
+        <span id="opt-zoom-val" class="opt-zoom-val">100%</span>
+        <button type="button" id="opt-zoom-in" class="opt-zoom-btn" aria-label="Zoom in" title="Zoom in">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <span class="opt-zoom-sep"></span>
+        <button type="button" id="opt-zoom-fit" class="opt-zoom-btn opt-zoom-btn-text" data-i18n="opt.zoom.fit">جا کن</button>
+        <button type="button" id="opt-zoom-100" class="opt-zoom-btn opt-zoom-btn-text" data-i18n="opt.zoom.actual">۱:۱</button>
+        <span class="opt-zoom-hint" data-i18n="opt.zoom.hint">با اسکرول zoom، با درگ pan</span>
+      </div>
+
+      <!-- ============ STEP 3: DOWNLOAD ============ -->
+      <div class="step-label">
+        <span class="step-num">۳</span>
+        <span data-i18n="opt.step.download">دانلود</span>
+      </div>
+
+      <div class="glass-card p-4 sm:p-5">
+        <div class="opt-actions">
+          <div class="opt-stats">
+            <div class="opt-stat">
+              <span class="opt-stat-label" data-i18n="opt.stats.savings">کاهش حجم:</span>
+              <span id="opt-stat-savings" class="opt-stat-val">—</span>
+            </div>
+            <div class="opt-stat">
+              <span class="opt-stat-label" data-i18n="opt.stats.ratio">نسبت:</span>
+              <span id="opt-stat-ratio" class="opt-stat-val">—</span>
+            </div>
+          </div>
+          <button id="opt-download" class="action-btn" disabled>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>
+            </svg>
+            <span data-i18n="opt.download">دانلود</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ BATCH WORKSPACE ============ -->
+    <section id="opt-batch-workspace" class="hidden">
+
+      <!-- Step 1: Settings -->
+      <div class="step-label">
+        <span class="step-num">۱</span>
+        <span data-i18n="opt.step.settings">تنظیمات خروجی</span>
+        <button id="opt-batch-reset" class="btn-ghost text-xs ms-auto" data-i18n="opt.settings.reset">انتخاب تصویر دیگر</button>
+      </div>
+
+      <div class="glass-card p-4 sm:p-5 mb-5 sm:mb-6">
+        <div class="settings-grid">
+          <div>
+            <label for="opt-b-codec" class="block text-sm font-semibold mb-2" data-i18n="opt.codec.label">فرمت خروجی</label>
+            <select id="opt-b-codec" class="glass-select">
+              <option value="webp" data-i18n-option="opt.codec.webp">WebP — فشرده‌سازی هوشمند (پیشنهادی)</option>
+              <option value="jpeg" data-i18n-option="opt.codec.jpeg">JPEG — مرورگر</option>
+              <option value="png" data-i18n-option="opt.codec.png">PNG — مرورگر (lossless)</option>
+              <option value="avif" data-i18n-option="opt.codec.avif">AVIF — بهترین فشرده‌سازی</option>
+            </select>
+          </div>
+
+          <div id="opt-b-quality-row">
+            <label for="opt-b-quality" class="block text-sm font-semibold mb-2">
+              <span data-i18n="opt.quality.label">کیفیت</span>
+              <span class="opt-quality-meta">
+                <span id="opt-b-quality-val" class="text-cyan font-extrabold">75</span>
+              </span>
+            </label>
+            <input id="opt-b-quality" type="range" min="1" max="100" value="75" class="opt-range" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-2" data-i18n="opt.resize.label">تغییر ابعاد (اختیاری)</label>
+            <div class="opt-resize-row">
+              <input id="opt-b-resize-w" type="number" placeholder="W" class="glass-select opt-resize-input" />
+              <span class="opt-resize-x">×</span>
+              <input id="opt-b-resize-h" type="number" placeholder="H" class="glass-select opt-resize-input" />
+              <label class="opt-resize-lock">
+                <input id="opt-b-resize-lock" type="checkbox" />
+                <span data-i18n="opt.resize.lock">حفظ نسبت</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Images grid -->
+      <div class="step-label">
+        <span class="step-num">۲</span>
+        <span data-i18n="opt.batch.step.images">تصاویر</span>
+        <span id="opt-batch-count" class="step-badge">0 / 50</span>
+      </div>
+
+      <div id="opt-batch-toolbar" class="flex items-center justify-between gap-3 mb-3">
+        <div class="text-xs sm:text-sm">
+          <span class="text-muted" data-i18n="opt.batch.added">افزوده شد:</span>
+          <span id="opt-batch-added" class="font-bold">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="opt-batch-add-more" class="btn-ghost text-xs">
+            <span data-i18n="opt.batch.addMore">افزودن بیشتر</span>
+          </button>
+          <button id="opt-batch-clear" class="btn-ghost text-xs text-rose-500 hover:text-rose-600">
+            <span data-i18n="opt.batch.clearAll">پاک کردن همه</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="opt-batch-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 mb-3"></div>
+
+      <div id="opt-batch-totals" class="opt-batch-totals hidden">
+        <div class="opt-batch-totals-item">
+          <span class="opt-batch-totals-label" data-i18n="opt.batch.totals.original">حجم اصلی کل</span>
+          <span id="opt-batch-totals-orig" class="opt-batch-totals-val">—</span>
+        </div>
+        <div class="opt-batch-totals-item">
+          <span class="opt-batch-totals-label" data-i18n="opt.batch.totals.compressed">حجم فشرده‌شده</span>
+          <span id="opt-batch-totals-comp" class="opt-batch-totals-val">—</span>
+        </div>
+        <div class="opt-batch-totals-item opt-batch-totals-saved">
+          <span class="opt-batch-totals-label" data-i18n="opt.batch.totals.saved">صرفه‌جویی</span>
+          <span id="opt-batch-totals-saved" class="opt-batch-totals-val">—</span>
+          <span id="opt-batch-totals-pct" class="opt-batch-totals-pct">—</span>
+        </div>
+      </div>
+      <div class="mb-5 sm:mb-6"></div>
+
+      <!-- Step 3: Process -->
+      <div class="step-label">
+        <span class="step-num">۳</span>
+        <span data-i18n="opt.batch.step.process">پردازش و دانلود</span>
+      </div>
+
+      <div class="glass-card p-4 sm:p-5">
+        <button id="opt-batch-process" class="action-btn w-full" disabled>
+          <span class="btn-default">
+            <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12l3 3 9-9M3 19h18"/>
+            </svg>
+            <span id="opt-batch-process-label" data-i18n="opt.batch.compress">فشرده‌سازی و پیش‌نمایش</span>
+          </span>
+          <span class="btn-loading">
+            <span class="spinner-sm"></span>
+            <span data-i18n="opt.batch.processing">در حال پردازش…</span>
+          </span>
+        </button>
+
+        <div id="opt-batch-progress" class="hidden mt-4">
+          <div class="flex items-center justify-between mb-2 text-sm">
+            <span id="opt-batch-progress-label" class="font-bold">—</span>
+            <span id="opt-batch-progress-pct" class="font-extrabold tabular-nums text-cyan">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="opt-batch-progress-fill" class="progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div id="opt-batch-stats" class="hidden mt-5">
+          <div class="opt-batch-stats-head">
+            <span class="opt-pane-tag opt-pane-tag-accent" data-i18n="opt.batch.stats.title">خلاصه فشرده‌سازی</span>
+            <span id="opt-batch-stat-processed" class="text-xs text-muted">—</span>
+          </div>
+          <div class="opt-batch-stats-grid">
+            <div class="opt-batch-stat-card">
+              <span class="opt-batch-stat-label" data-i18n="opt.batch.stats.totalOriginal">حجم اصلی کل</span>
+              <span id="opt-batch-stat-original" class="opt-batch-stat-val">—</span>
+            </div>
+            <div class="opt-batch-stat-card">
+              <span class="opt-batch-stat-label" data-i18n="opt.batch.stats.totalCompressed">حجم فشرده‌شده</span>
+              <span id="opt-batch-stat-compressed" class="opt-batch-stat-val">—</span>
+            </div>
+            <div class="opt-batch-stat-card opt-batch-stat-card-hero">
+              <span class="opt-batch-stat-label" data-i18n="opt.batch.stats.totalSaved">صرفه‌جویی</span>
+              <span id="opt-batch-stat-saved" class="opt-batch-stat-val">—</span>
+              <span id="opt-batch-stat-saved-pct" class="opt-batch-stat-pill">—</span>
+            </div>
+          </div>
+
+          <details id="opt-batch-files-details" class="opt-batch-files-details">
+            <summary id="opt-batch-files-summary" class="opt-batch-files-summary">جزئیات هر فایل</summary>
+            <div id="opt-batch-files-list" class="opt-batch-files-list"></div>
+          </details>
+
+          <button id="opt-batch-download" class="action-btn w-full mt-5">
+            <span class="btn-default">
+              <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>
+              </svg>
+              <span data-i18n="opt.batch.downloadZip">دانلود ZIP</span>
+            </span>
+            <span class="btn-loading">
+              <span class="spinner-sm"></span>
+              <span data-i18n="opt.batch.zipping2">در حال ساخت ZIP…</span>
+            </span>
+          </button>
+        </div>
+
+        <p id="opt-batch-stale-notice" class="hidden mt-3 text-xs text-amber-500 font-semibold" data-i18n="opt.batch.staleNotice">
+          تنظیمات تغییر کرد — برای دیدن نتیجه‌ی جدید دوباره «فشرده‌سازی» رو بزن
+        </p>
+      </div>
+
+      <!-- Step 4: Per-image downloads (only after compress) -->
+      <div id="opt-batch-compressed-section" class="hidden">
+        <div class="step-label mt-6 sm:mt-8">
+          <span class="step-num">۴</span>
+          <span data-i18n="opt.batch.compressed.title">تصاویر فشرده‌شده</span>
+          <span class="text-[11px] sm:text-xs text-muted font-medium ms-auto" data-i18n="opt.batch.compressed.hint">برای دانلود تک‌تک، روی هر تصویر کلیک کن</span>
+        </div>
+        <div id="opt-batch-compressed-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-5 sm:mb-6"></div>
+      </div>
+
+    </section>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="text-center mt-10 mb-4 text-[11px] sm:text-xs text-muted">
+      <p>
+        <span data-i18n="footer.credit">ساخته شده به وسیله</span>
+        <a href="https://yaldajahanshahi.ir" target="_blank" rel="noopener noreferrer" class="text-cyan hover:underline">YJ19</a>
+      </p>
+    </footer>
+  </main>
+
+  <!-- Toast container — bottom on mobile (away from header), top-right on desktop -->
+  <div id="toast-container" class="fixed bottom-4 inset-x-3 sm:bottom-auto sm:top-4 sm:inset-x-auto sm:end-4 z-50 flex flex-col gap-2 sm:max-w-sm pointer-events-none" role="status" aria-live="polite" aria-atomic="false"></div>
+
+  <script defer src="optimizer.js?v=20260614e"></script>
+</body>
+</html>
