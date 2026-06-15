@@ -83,7 +83,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="fonts/fonts.css?v=20260615a" />
 
-  <!-- Critical CSS: prevents FOUC when Tailwind CDN is still loading -->
+  <!-- Critical CSS: prevents FOUC and handles theme-icon visibility independently of Tailwind JIT -->
   <style>
     .hidden { display: none !important; }
     .sr-only {
@@ -93,6 +93,11 @@
       overflow: hidden !important; clip: rect(0,0,0,0) !important;
       white-space: nowrap !important; border: 0 !important;
     }
+    /* Theme toggle icons — driven by [data-theme] on <html>, no Tailwind dark: needed */
+    .theme-icon-sun { display: none; }
+    .theme-icon-moon { display: block; }
+    [data-theme="dark"] .theme-icon-sun { display: block; }
+    [data-theme="dark"] .theme-icon-moon { display: none; }
   </style>
 
   <script src="vendor/tailwind-3.4.17.js?v=20260615a"></script>
@@ -170,11 +175,11 @@
           </svg>
           <span class="hidden sm:inline" data-i18n="pwa.install">نصب اپ</span>
         </button>
-        <button id="theme-toggle" class="glass-pill w-9 h-9 flex items-center justify-center" aria-label="Toggle theme">
-          <svg class="w-4 h-4 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="theme-toggle" class="glass-pill w-9 h-9 flex items-center justify-center" aria-label="Toggle theme" title="تغییر تم">
+          <svg class="theme-icon-sun w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
           </svg>
-          <svg class="w-4 h-4 block dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="theme-icon-moon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>

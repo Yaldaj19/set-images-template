@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#05060e" />
 
   <title data-i18n="opt.title">بهینه‌ساز تصویر آنلاین — فشرده‌سازی و تبدیل فرمت رایگان</title>
-  <meta name="description" content="بهینه‌ساز رایگان تصویر در مرورگر — فشرده‌سازی JPEG، PNG، WebP و AVIF تا ۹۰٪ بدون افت کیفیت، تغییر ابعاد و خروجی دسته‌ای ZIP. کاملاً محلی، بدون آپلود به سرور و بدون نیاز به ثبت‌نام." />
+  <meta name="description" content="بهینه‌ساز رایگان تصویر — فشرده‌سازی JPEG، PNG، WebP و AVIF تا ۹۰٪ بدون افت کیفیت، تغییر ابعاد و خروجی دسته‌ای ZIP. تمام پردازش در مرورگر شما انجام می‌شود؛ فایل‌ها به سرور ارسال نمی‌شوند." />
   <meta name="keywords" content="بهینه ساز تصویر, فشرده سازی عکس, تبدیل WebP, AVIF, کاهش حجم تصویر آنلاین, کمپرس عکس, image optimizer, webp converter, jpeg compressor, batch image compression" />
   <meta name="author" content="YJ19" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -26,7 +26,7 @@
   <meta property="og:url" content="https://templateimg.yaldajahanshahi.ir/optimizer/" />
   <meta property="og:site_name" content="بهینه‌ساز تصویر · YJ19" />
   <meta property="og:title" content="بهینه‌ساز تصویر — فشرده‌سازی و تبدیل فرمت در مرورگر" />
-  <meta property="og:description" content="فشرده‌سازی JPEG، PNG، WebP و AVIF تا ۹۰٪ بدون افت کیفیت — کاملاً محلی در مرورگر، بدون آپلود به سرور. پشتیبانی از پردازش دسته‌ای و خروجی ZIP." />
+  <meta property="og:description" content="فشرده‌سازی JPEG، PNG، WebP و AVIF تا ۹۰٪ بدون افت کیفیت — تمام پردازش در مرورگر شما، بدون آپلود فایل به سرور. پشتیبانی از پردازش دسته‌ای و خروجی ZIP." />
   <meta property="og:image" content="https://templateimg.yaldajahanshahi.ir/assets/Set-Images-template-logo.webp" />
   <meta property="og:image:alt" content="بهینه‌ساز تصویر YJ19" />
   <meta property="og:locale" content="fa_IR" />
@@ -34,7 +34,7 @@
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="بهینه‌ساز تصویر — فشرده‌سازی و تبدیل فرمت در مرورگر" />
-  <meta name="twitter:description" content="فشرده‌سازی تصاویر تا ۹۰٪ بدون افت کیفیت — کاملاً در مرورگر، بدون آپلود، رایگان." />
+  <meta name="twitter:description" content="فشرده‌سازی تصاویر تا ۹۰٪ بدون افت کیفیت — تمام پردازش در مرورگر، بدون آپلود، رایگان." />
   <meta name="twitter:image" content="https://templateimg.yaldajahanshahi.ir/assets/Set-Images-template-logo.webp" />
 
   <script type="application/ld+json">
@@ -49,7 +49,7 @@
     "operatingSystem": "Any modern web browser",
     "browserRequirements": "Requires JavaScript. Requires HTML5.",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "description": "بهینه‌ساز رایگان تصویر در مرورگر؛ فشرده‌سازی JPEG، PNG، WebP و AVIF تا ۹۰٪ بدون افت کیفیت، تغییر ابعاد، پردازش دسته‌ای و خروجی ZIP — بدون آپلود به سرور.",
+    "description": "بهینه‌ساز رایگان تصویر؛ فشرده‌سازی JPEG، PNG، WebP و AVIF تا ۹۰٪ بدون افت کیفیت، تغییر ابعاد، پردازش دسته‌ای و خروجی ZIP. تمام پردازش در مرورگر کاربر انجام می‌شود و فایلی به سرور ارسال نمی‌شود.",
     "inLanguage": ["fa", "en"],
     "isAccessibleForFree": true,
     "featureList": [
@@ -79,7 +79,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="../fonts/fonts.css?v=20260615a" />
 
-  <!-- Critical CSS: prevents FOUC when Tailwind CDN is still loading -->
+  <!-- Critical CSS: prevents FOUC and handles theme-icon visibility independently of Tailwind JIT -->
   <style>
     .hidden { display: none !important; }
     .sr-only {
@@ -89,6 +89,11 @@
       overflow: hidden !important; clip: rect(0,0,0,0) !important;
       white-space: nowrap !important; border: 0 !important;
     }
+    /* Theme toggle icons — driven by [data-theme] on <html>, no Tailwind dark: needed */
+    .theme-icon-sun { display: none; }
+    .theme-icon-moon { display: block; }
+    [data-theme="dark"] .theme-icon-sun { display: block; }
+    [data-theme="dark"] .theme-icon-moon { display: none; }
   </style>
 
   <script src="../vendor/tailwind-3.4.17.js?v=20260615a"></script>
@@ -132,7 +137,7 @@
         </div>
         <div class="min-w-0">
           <h1 class="text-base sm:text-xl font-bold leading-tight truncate" data-i18n="opt.name">بهینه‌ساز تصویر</h1>
-          <p class="text-[11px] sm:text-xs text-muted leading-none hidden sm:block" data-i18n="opt.tagline">فشرده‌سازی و تبدیل فرمت بدون افت کیفیت</p>
+          <p class="text-[11px] sm:text-xs text-muted leading-none hidden sm:block" data-i18n="opt.tagline">بهینه‌سازی و تبدیل فرمت تصاویر در مرورگر</p>
         </div>
       </div>
 
@@ -159,11 +164,11 @@
           <button data-lang-btn="fa" class="lang-btn px-2 sm:px-2.5 py-1 rounded-full">فا</button>
           <button data-lang-btn="en" class="lang-btn px-2 sm:px-2.5 py-1 rounded-full">EN</button>
         </div>
-        <button id="theme-toggle" class="glass-pill w-9 h-9 flex items-center justify-center" aria-label="Toggle theme">
-          <svg class="w-4 h-4 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="theme-toggle" class="glass-pill w-9 h-9 flex items-center justify-center" aria-label="Toggle theme" title="تغییر تم">
+          <svg class="theme-icon-sun w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
           </svg>
-          <svg class="w-4 h-4 block dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="theme-icon-moon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
@@ -180,10 +185,10 @@
     <!-- ============ HERO ============ -->
     <section id="opt-hero" class="text-center mb-7 sm:mb-10">
       <h2 class="text-2xl sm:text-4xl font-extrabold mb-2 sm:mb-3 text-gradient-brand" data-i18n="opt.hero.title">
-        تصویر رو کوچیک کن، کیفیت رو نگه دار
+        بهینه‌سازی هوشمند تصاویر، با حفظ کیفیت
       </h2>
       <p class="text-xs sm:text-base text-muted max-w-2xl mx-auto px-2" data-i18n="opt.hero.subtitle">
-        تصویرت رو بنداز اینجا، فرمت دلخواه رو انتخاب کن، و یک نسخه‌ی سبک‌تر بگیر — کاملاً محلی، بدون آپلود به سرور.
+        تبدیل فرمت، فشرده‌سازی و تغییر ابعاد تصاویر JPEG، PNG، WebP و AVIF در یک ابزار سریع و امن — تمام پردازش در مرورگر شما انجام می‌شود و فایل‌ها هرگز به سرور ارسال نمی‌شوند.
       </p>
     </section>
 
