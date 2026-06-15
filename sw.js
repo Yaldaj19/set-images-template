@@ -1,14 +1,14 @@
 /* Service worker — app-shell cache for the Set-Images-template PWA.
    IMPORTANT: bump CACHE on every deploy so clients receive fresh files. */
-const CACHE = 'sit-shell-v7';
+const CACHE = 'sit-shell-v8';
 
 const APP_SHELL = [
   'index.html',
   'offline.html',
   'manifest.json',
-  'styles/main.css?v=20260614a',
-  'scripts/bundle.js?v=20260614a',
-  'scripts/pwa.js?v=20260614a',
+  'styles/main.css?v=20260615a',
+  'scripts/bundle.js?v=20260615a',
+  'scripts/pwa.js?v=20260615a',
   'assets/favicon.ico',
   'assets/Set-Images-template-logo.webp',
   'assets/icons/icon-192.png',

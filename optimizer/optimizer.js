@@ -173,8 +173,16 @@
   function detectInitialLang() {
     const saved = localStorage.getItem(LS_LANG);
     if (saved && dictionaries[saved]) return saved;
-    const nav = (navigator.language || 'fa').toLowerCase();
-    return nav.startsWith('en') ? 'en' : 'fa';
+    // Walk through browser's preferred language list and match the first supported one.
+    const supported = Object.keys(dictionaries);
+    const list = (navigator.languages && navigator.languages.length)
+      ? navigator.languages
+      : [navigator.language || ''];
+    for (const item of list) {
+      const code = String(item).toLowerCase().split(/[-_]/)[0];
+      if (supported.includes(code)) return code;
+    }
+    return 'fa';
   }
 
   function applyI18nDom() {

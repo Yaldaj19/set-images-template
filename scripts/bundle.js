@@ -189,7 +189,15 @@
   function detectInitialLang() {
     const saved = safeLS(() => localStorage.getItem(LS_LANG));
     if (saved && dictionaries[saved]) return saved;
-    // Default is always Persian (no auto-detect from browser)
+    // Auto-detect from browser language list; fall back to Persian.
+    const supported = Object.keys(dictionaries);
+    const list = (navigator.languages && navigator.languages.length)
+      ? navigator.languages
+      : [navigator.language || ''];
+    for (let i = 0; i < list.length; i++) {
+      const code = String(list[i] || '').toLowerCase().split(/[-_]/)[0];
+      if (supported.indexOf(code) !== -1) return code;
+    }
     return 'fa';
   }
 

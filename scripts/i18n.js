@@ -163,8 +163,15 @@ const listeners = new Set();
 function detectInitialLang() {
   const saved = localStorage.getItem(LS_KEY);
   if (saved && dictionaries[saved]) return saved;
-  const nav = (navigator.language || 'fa').toLowerCase();
-  if (nav.startsWith('en')) return 'en';
+  // Auto-detect from browser language list; fall back to Persian.
+  const supported = Object.keys(dictionaries);
+  const list = (navigator.languages && navigator.languages.length)
+    ? navigator.languages
+    : [navigator.language || ''];
+  for (const item of list) {
+    const code = String(item).toLowerCase().split(/[-_]/)[0];
+    if (supported.includes(code)) return code;
+  }
   return 'fa';
 }
 
