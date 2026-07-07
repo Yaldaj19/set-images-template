@@ -477,8 +477,8 @@ body {
 .glass-select {
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid var(--glass-border-light);
-  background: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(6, 212, 255, 0.35);
+  background: rgba(255,255,255,0.7);
   font-family: inherit;
   font-size: 0.9rem;
   color: inherit;
@@ -494,8 +494,8 @@ body {
 }
 [data-theme="dark"] .glass-input,
 [data-theme="dark"] .glass-select {
-  border-color: var(--glass-border-dark);
-  background: rgba(255,255,255,0.04);
+  border-color: rgba(6, 212, 255, 0.35);
+  background: rgba(255,255,255,0.07);
   color: var(--text-dark);
 }
 [data-theme="dark"] .glass-input:focus,
@@ -511,11 +511,12 @@ body {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306d4ff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  /* Chevron inside a filled cyan circle — an unmistakable dropdown cue */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%2306d4ff'/%3E%3Cpath d='M7 10l5 5 5-5' fill='none' stroke='%23052027' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 18px;
-  padding-inline-end: 40px;
+  background-position: right 10px center;
+  background-size: 22px;
+  padding-inline-end: 42px;
   cursor: pointer;
   /* Hint to the browser about color scheme for native dropdown popup */
   color-scheme: light;
@@ -524,9 +525,9 @@ body {
   color-scheme: dark;
 }
 [dir="rtl"] .glass-select {
-  background-position: left 12px center;
+  background-position: left 10px center;
   padding-inline-end: 14px;
-  padding-inline-start: 36px;
+  padding-inline-start: 42px;
 }
 
 /* Native option styling — option popup is OS-rendered, only bg/color usually apply */

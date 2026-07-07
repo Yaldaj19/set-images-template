@@ -1293,11 +1293,11 @@
     workingBitmap = await createImageBitmap(canvas);
     workingBlob = blob;
     originalNaturalSize = { w: workingBitmap.width, h: workingBitmap.height };
+    // Keep a URL of the edited image for chaining edits (e.g. crop after bg-removal),
+    // but the "Original" pane must ALWAYS keep showing the uploaded image — only the
+    // compressed pane reflects the edit.
     if (workingUrl) URL.revokeObjectURL(workingUrl);
     workingUrl = URL.createObjectURL(blob);
-    els.originalImg.src = workingUrl;
-    els.originalInfo.textContent =
-      `${originalNaturalSize.w}×${originalNaturalSize.h} · ${formatBytes(blob.size)}`;
     els.resizeW.value = originalNaturalSize.w;
     els.resizeH.value = originalNaturalSize.h;
     if (els.editReset) els.editReset.classList.remove('hidden');

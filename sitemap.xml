@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://templateimg.yaldajahanshahi.ir/</loc>
+    <loc>https://imagetools.yaldajahanshahi.ir/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://templateimg.yaldajahanshahi.ir/placement/</loc>
+    <loc>https://imagetools.yaldajahanshahi.ir/template-img-placement/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://templateimg.yaldajahanshahi.ir/optimizer/</loc>
+    <loc>https://imagetools.yaldajahanshahi.ir/optimizer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://templateimg.yaldajahanshahi.ir/remove-bg/</loc>
+    <loc>https://imagetools.yaldajahanshahi.ir/remove-bg/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
