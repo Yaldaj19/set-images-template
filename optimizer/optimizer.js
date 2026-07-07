@@ -65,6 +65,20 @@
       'opt.quality.label': 'کیفیت',
       'opt.resize.label': 'تغییر ابعاد (اختیاری)',
       'opt.resize.lock': 'حفظ نسبت',
+      'opt.edit.label': 'ویرایش تصویر',
+      'opt.edit.crop': 'برش',
+      'opt.edit.removeBg': 'حذف پس‌زمینه',
+      'opt.edit.reset': 'بازگردانی',
+      'opt.edit.bgProcessing': 'در حال حذف پس‌زمینه…',
+      'opt.edit.bgLoading': 'بارگذاری مدل هوش مصنوعی…',
+      'opt.edit.bgProgress': 'پردازش… {p}٪',
+      'opt.edit.bgDone': 'پس‌زمینه حذف شد ✓',
+      'opt.edit.bgFailed': 'حذف پس‌زمینه ناموفق بود — اتصال اینترنت رو چک کن',
+      'opt.crop.title': 'برش تصویر',
+      'opt.crop.free': 'آزاد',
+      'opt.crop.orig': 'نسبت تصویر',
+      'opt.crop.cancel': 'لغو',
+      'opt.crop.apply': 'اعمال برش',
       'opt.pane.original': 'اصل',
       'opt.pane.compressed': 'فشرده‌شده',
       'opt.pane.compressing': 'در حال پردازش…',
@@ -139,6 +153,20 @@
       'opt.quality.label': 'Quality',
       'opt.resize.label': 'Resize (optional)',
       'opt.resize.lock': 'Lock ratio',
+      'opt.edit.label': 'Edit image',
+      'opt.edit.crop': 'Crop',
+      'opt.edit.removeBg': 'Remove background',
+      'opt.edit.reset': 'Undo edits',
+      'opt.edit.bgProcessing': 'Removing background…',
+      'opt.edit.bgLoading': 'Loading AI model…',
+      'opt.edit.bgProgress': 'Processing… {p}%',
+      'opt.edit.bgDone': 'Background removed ✓',
+      'opt.edit.bgFailed': 'Background removal failed — check your connection',
+      'opt.crop.title': 'Crop image',
+      'opt.crop.free': 'Free',
+      'opt.crop.orig': 'Original ratio',
+      'opt.crop.cancel': 'Cancel',
+      'opt.crop.apply': 'Apply crop',
       'opt.pane.original': 'Original',
       'opt.pane.compressed': 'Compressed',
       'opt.pane.compressing': 'Processing…',
@@ -247,14 +275,21 @@
 
   const els = {};
   let originalFile = null;
-  let originalBitmap = null;
+  let originalBitmap = null;      // pristine decoded source (never mutated)
   let originalNaturalSize = { w: 0, h: 0 };
   let originalUrl = null;
+  // "Working" image = the current source fed into compression. Starts equal to the
+  // original, then diverges when the user crops or removes the background.
+  let workingBitmap = null;
+  let workingBlob = null;         // blob of the working image (bg-removal input + size)
+  let workingUrl = null;          // object URL for the original-pane preview after an edit
   let lastCompressedBlob = null;
   let lastCompressedUrl = null;
   let compressGen = 0;
   let compressDebounceTimer = null;
   let avifWasmModule = null;
+  let bgModule = null;            // cached @imgly/background-removal module
+  let bgProcessing = false;
 
   const EXT_BY_CODEC = { webp: 'webp', jpeg: 'jpg', png: 'png', avif: 'avif' };
   const MAX_BATCH = 50;
@@ -330,14 +365,20 @@
     els.workspace.classList.add('hidden');
     resetView();
     originalFile = null;
+    if (workingBitmap && workingBitmap !== originalBitmap && workingBitmap.close) workingBitmap.close();
     if (originalBitmap && originalBitmap.close) originalBitmap.close();
     originalBitmap = null;
+    workingBitmap = null;
+    workingBlob = null;
     originalNaturalSize = { w: 0, h: 0 };
     if (originalUrl) URL.revokeObjectURL(originalUrl);
+    if (workingUrl) URL.revokeObjectURL(workingUrl);
     if (lastCompressedUrl) URL.revokeObjectURL(lastCompressedUrl);
     originalUrl = null;
+    workingUrl = null;
     lastCompressedBlob = null;
     lastCompressedUrl = null;
+    if (els.editReset) els.editReset.classList.add('hidden');
     els.originalImg.removeAttribute('src');
     els.compressedImg.removeAttribute('src');
     els.originalInfo.textContent = '—';
@@ -361,8 +402,14 @@
     }
     try {
       originalFile = file;
+      if (workingBitmap && workingBitmap !== originalBitmap && workingBitmap.close) workingBitmap.close();
       if (originalBitmap && originalBitmap.close) originalBitmap.close();
       originalBitmap = await createImageBitmap(file);
+      // Fresh load → working image starts as the pristine original
+      workingBitmap = originalBitmap;
+      workingBlob = file;
+      if (workingUrl) { URL.revokeObjectURL(workingUrl); workingUrl = null; }
+      if (els.editReset) els.editReset.classList.add('hidden');
       originalNaturalSize = { w: originalBitmap.width, h: originalBitmap.height };
 
       if (originalUrl) URL.revokeObjectURL(originalUrl);
@@ -443,7 +490,7 @@
   }
 
   async function runCompression() {
-    if (!originalBitmap || !originalFile) return;
+    if (!workingBitmap || !originalFile) return;
     const myGen = ++compressGen;
 
     els.compressedPlaceholder.classList.remove('hidden');
@@ -453,7 +500,7 @@
 
     try {
       const opts = currentOptions();
-      const blob = await compressBitmap(originalBitmap, opts);
+      const blob = await compressBitmap(workingBitmap, opts);
       if (myGen !== compressGen) return;
 
       if (lastCompressedUrl) URL.revokeObjectURL(lastCompressedUrl);
@@ -1196,6 +1243,280 @@
     }
   }
 
+  /* ========== Working image (crop / bg-removal results) ========== */
+  // Replace the compression source with an edited canvas, refresh the preview,
+  // resize inputs and re-run compression.
+  async function applyWorkingImage(canvas) {
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+    if (!blob) { toast(t('toast.encodeFailed'), 'error'); return; }
+    if (workingBitmap && workingBitmap !== originalBitmap && workingBitmap.close) workingBitmap.close();
+    workingBitmap = await createImageBitmap(canvas);
+    workingBlob = blob;
+    originalNaturalSize = { w: workingBitmap.width, h: workingBitmap.height };
+    if (workingUrl) URL.revokeObjectURL(workingUrl);
+    workingUrl = URL.createObjectURL(blob);
+    els.originalImg.src = workingUrl;
+    els.originalInfo.textContent =
+      `${originalNaturalSize.w}×${originalNaturalSize.h} · ${formatBytes(blob.size)}`;
+    els.resizeW.value = originalNaturalSize.w;
+    els.resizeH.value = originalNaturalSize.h;
+    if (els.editReset) els.editReset.classList.remove('hidden');
+    resetView();
+    runCompression();
+  }
+
+  function resetEdits() {
+    if (!originalBitmap || !originalFile) return;
+    if (workingBitmap && workingBitmap !== originalBitmap && workingBitmap.close) workingBitmap.close();
+    workingBitmap = originalBitmap;
+    workingBlob = originalFile;
+    originalNaturalSize = { w: originalBitmap.width, h: originalBitmap.height };
+    if (workingUrl) { URL.revokeObjectURL(workingUrl); workingUrl = null; }
+    els.originalImg.src = originalUrl;
+    els.originalInfo.textContent =
+      `${originalNaturalSize.w}×${originalNaturalSize.h} · ${formatBytes(originalFile.size)}`;
+    els.resizeW.value = originalNaturalSize.w;
+    els.resizeH.value = originalNaturalSize.h;
+    if (els.editReset) els.editReset.classList.add('hidden');
+    resetView();
+    runCompression();
+  }
+
+  /* ========== Background removal (client-side, @imgly, private) ========== */
+  async function removeBackground() {
+    if (!workingBlob || bgProcessing) return;
+    bgProcessing = true;
+    els.bgBtn.classList.add('is-loading');
+    els.bgBtn.disabled = true;
+    if (els.cropBtn) els.cropBtn.disabled = true;
+    try {
+      if (!bgModule) {
+        if (els.bgProgress) els.bgProgress.textContent = t('opt.edit.bgLoading');
+        bgModule = await import(
+          /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm'
+        );
+      }
+      const remove = bgModule.removeBackground || (bgModule.default && bgModule.default.removeBackground);
+      if (typeof remove !== 'function') throw new Error('removeBackground export not found');
+      const config = {
+        progress: (key, current, total) => {
+          if (!els.bgProgress) return;
+          const pct = total ? Math.round((current / total) * 100) : 0;
+          els.bgProgress.textContent = t('opt.edit.bgProgress', { p: pct });
+        },
+      };
+      const resultBlob = await remove(workingBlob, config);
+      const bmp = await createImageBitmap(resultBlob);
+      const canvas = document.createElement('canvas');
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+      canvas.getContext('2d').drawImage(bmp, 0, 0);
+      if (bmp.close) bmp.close();
+      // Transparency needs an alpha-capable codec — JPEG would flatten it to black/white.
+      if (els.codec.value === 'jpeg') {
+        els.codec.value = 'png';
+        updateCodecUI();
+      }
+      await applyWorkingImage(canvas);
+      toast(t('opt.edit.bgDone'));
+    } catch (err) {
+      console.error('Background removal failed:', err);
+      toast(t('opt.edit.bgFailed'), 'error');
+    } finally {
+      bgProcessing = false;
+      els.bgBtn.classList.remove('is-loading');
+      els.bgBtn.disabled = false;
+      if (els.cropBtn) els.cropBtn.disabled = false;
+      if (els.bgProgress) els.bgProgress.textContent = t('opt.edit.bgProcessing');
+    }
+  }
+
+  /* ========== Crop tool (interactive, client-side) ========== */
+  const crop = {
+    ratio: 'free',                    // 'free' | 'orig' | number-string (w/h)
+    box: { x: 0, y: 0, w: 0, h: 0 },  // display px, relative to the crop image top-left
+    imgW: 0,
+    imgH: 0,
+  };
+  const CROP_MIN = 24;
+
+  function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function cropRatioNumber() {
+    if (crop.ratio === 'free') return null;
+    if (crop.ratio === 'orig') {
+      return originalNaturalSize.h ? originalNaturalSize.w / originalNaturalSize.h : null;
+    }
+    const n = parseFloat(crop.ratio);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
+  function renderCropBox() {
+    const b = crop.box;
+    els.cropBox.style.left = b.x + 'px';
+    els.cropBox.style.top = b.y + 'px';
+    els.cropBox.style.width = b.w + 'px';
+    els.cropBox.style.height = b.h + 'px';
+    if (els.cropDims && crop.imgW > 0) {
+      const scale = originalNaturalSize.w / crop.imgW;
+      els.cropDims.textContent = Math.round(b.w * scale) + ' × ' + Math.round(b.h * scale) + ' px';
+    }
+  }
+
+  function fitBoxToRatio(keepCenter) {
+    const r = cropRatioNumber();
+    if (!r) return;
+    let { x, y, w, h } = crop.box;
+    const cx = x + w / 2, cy = y + h / 2;
+    if (w / h > r) w = h * r; else h = w / r;
+    if (w > crop.imgW) { w = crop.imgW; h = w / r; }
+    if (h > crop.imgH) { h = crop.imgH; w = h * r; }
+    if (keepCenter) {
+      x = clampNum(cx - w / 2, 0, crop.imgW - w);
+      y = clampNum(cy - h / 2, 0, crop.imgH - h);
+    } else {
+      x = clampNum(x, 0, crop.imgW - w);
+      y = clampNum(y, 0, crop.imgH - h);
+    }
+    crop.box = { x, y, w, h };
+  }
+
+  function setCropRatio(r) {
+    crop.ratio = r;
+    els.cropRatios.forEach((btn) => btn.classList.toggle('active', btn.dataset.ratio === String(r)));
+    els.cropBox.classList.toggle('ratio-locked', cropRatioNumber() != null);
+    fitBoxToRatio(true);
+    renderCropBox();
+  }
+
+  function anchorFor(handle, b) {
+    // opposite corner of the dragged corner handle
+    return {
+      x: handle.indexOf('w') >= 0 ? b.x + b.w : b.x,
+      y: handle.indexOf('n') >= 0 ? b.y + b.h : b.y,
+    };
+  }
+
+  function beginCropDrag(handle, ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const startBox = { ...crop.box };
+    const wrapRect = els.cropImgWrap.getBoundingClientRect();
+    const startX = ev.clientX, startY = ev.clientY;
+    const r = cropRatioNumber();
+
+    function onMove(e) {
+      const px = clampNum(e.clientX - wrapRect.left, 0, crop.imgW);
+      const py = clampNum(e.clientY - wrapRect.top, 0, crop.imgH);
+      let { x, y, w, h } = startBox;
+
+      if (handle === 'move') {
+        const nx = clampNum(startBox.x + (e.clientX - startX), 0, crop.imgW - startBox.w);
+        const ny = clampNum(startBox.y + (e.clientY - startY), 0, crop.imgH - startBox.h);
+        crop.box = { x: nx, y: ny, w: startBox.w, h: startBox.h };
+      } else if (handle.length === 2) {
+        // corner handle
+        const a = anchorFor(handle, startBox);
+        let nw = Math.abs(px - a.x);
+        let nh = Math.abs(py - a.y);
+        if (r) { if (nw / nh > r) nw = nh * r; else nh = nw / r; }
+        nw = Math.max(CROP_MIN, nw);
+        nh = Math.max(CROP_MIN, nh);
+        const nx = px < a.x ? a.x - nw : a.x;
+        const ny = py < a.y ? a.y - nh : a.y;
+        crop.box = {
+          x: clampNum(nx, 0, crop.imgW - nw),
+          y: clampNum(ny, 0, crop.imgH - nh),
+          w: nw, h: nh,
+        };
+      } else {
+        // edge handle (free ratio only)
+        const right = x + w, bottom = y + h;
+        if (handle === 'e') w = clampNum(px - x, CROP_MIN, crop.imgW - x);
+        else if (handle === 's') h = clampNum(py - y, CROP_MIN, crop.imgH - y);
+        else if (handle === 'w') { const nx2 = clampNum(px, 0, right - CROP_MIN); w = right - nx2; x = nx2; }
+        else if (handle === 'n') { const ny2 = clampNum(py, 0, bottom - CROP_MIN); h = bottom - ny2; y = ny2; }
+        crop.box = { x, y, w, h };
+      }
+      renderCropBox();
+    }
+    function onUp() {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
+  function initCropBox() {
+    crop.imgW = els.cropImg.clientWidth;
+    crop.imgH = els.cropImg.clientHeight;
+    const w = crop.imgW * 0.8, h = crop.imgH * 0.8;
+    crop.box = { x: (crop.imgW - w) / 2, y: (crop.imgH - h) / 2, w, h };
+    if (cropRatioNumber() != null) fitBoxToRatio(true);
+    renderCropBox();
+  }
+
+  function openCrop() {
+    if (!workingBitmap) return;
+    setCropRatio('free');
+    els.cropImg.src = workingUrl || originalUrl;
+    els.cropModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (els.cropImg.complete && els.cropImg.naturalWidth) {
+      requestAnimationFrame(initCropBox);
+    } else {
+      const onReady = () => { initCropBox(); els.cropImg.removeEventListener('load', onReady); };
+      els.cropImg.addEventListener('load', onReady);
+    }
+  }
+
+  function closeCrop() {
+    els.cropModal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  async function applyCrop() {
+    if (!workingBitmap || crop.imgW <= 0) return;
+    const scale = originalNaturalSize.w / crop.imgW;
+    const sx = clampNum(Math.round(crop.box.x * scale), 0, originalNaturalSize.w - 1);
+    const sy = clampNum(Math.round(crop.box.y * scale), 0, originalNaturalSize.h - 1);
+    const sw = clampNum(Math.round(crop.box.w * scale), 1, originalNaturalSize.w - sx);
+    const sh = clampNum(Math.round(crop.box.h * scale), 1, originalNaturalSize.h - sy);
+    const canvas = document.createElement('canvas');
+    canvas.width = sw;
+    canvas.height = sh;
+    canvas.getContext('2d').drawImage(workingBitmap, sx, sy, sw, sh, 0, 0, sw, sh);
+    closeCrop();
+    await applyWorkingImage(canvas);
+  }
+
+  function bindEditTools() {
+    if (els.cropBtn) els.cropBtn.addEventListener('click', openCrop);
+    if (els.bgBtn) els.bgBtn.addEventListener('click', removeBackground);
+    if (els.editReset) els.editReset.addEventListener('click', resetEdits);
+
+    if (els.cropClose) els.cropClose.addEventListener('click', closeCrop);
+    if (els.cropCancel) els.cropCancel.addEventListener('click', closeCrop);
+    if (els.cropBackdrop) els.cropBackdrop.addEventListener('click', closeCrop);
+    if (els.cropApply) els.cropApply.addEventListener('click', applyCrop);
+
+    els.cropRatios.forEach((btn) => {
+      btn.addEventListener('click', () => setCropRatio(btn.dataset.ratio));
+    });
+
+    if (els.cropBox) {
+      els.cropBox.addEventListener('pointerdown', (e) => {
+        const handle = e.target.classList.contains('opt-crop-handle') ? e.target.dataset.h : 'move';
+        beginCropDrag(handle, e);
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && els.cropModal && !els.cropModal.classList.contains('hidden')) closeCrop();
+    });
+  }
+
   /* ========== Download ========== */
   function triggerDownload() {
     if (!lastCompressedBlob || !originalFile) return;
@@ -1241,6 +1562,22 @@
     els.zoomVal = document.getElementById('opt-zoom-val');
     els.zoomFit = document.getElementById('opt-zoom-fit');
     els.zoom100 = document.getElementById('opt-zoom-100');
+
+    // Edit tools (crop + background removal)
+    els.cropBtn = document.getElementById('opt-crop-btn');
+    els.bgBtn = document.getElementById('opt-bg-btn');
+    els.bgProgress = document.getElementById('opt-bg-progress');
+    els.editReset = document.getElementById('opt-edit-reset');
+    els.cropModal = document.getElementById('opt-crop-modal');
+    els.cropBackdrop = document.getElementById('opt-crop-backdrop');
+    els.cropImg = document.getElementById('opt-crop-img');
+    els.cropImgWrap = document.getElementById('opt-crop-imgwrap');
+    els.cropBox = document.getElementById('opt-crop-box');
+    els.cropClose = document.getElementById('opt-crop-close');
+    els.cropCancel = document.getElementById('opt-crop-cancel');
+    els.cropApply = document.getElementById('opt-crop-apply');
+    els.cropDims = document.getElementById('opt-crop-dims');
+    els.cropRatios = Array.from(document.querySelectorAll('.opt-crop-ratio'));
 
     // Batch elements
     els.batchInput = document.getElementById('opt-batch-input');
@@ -1295,6 +1632,7 @@
     bindDropZone();
     bindResize();
     bindZoomPan();
+    bindEditTools();
     bindBatch();
     updateBatchCodecUI();
     updateBatchQualityVal();
