@@ -14,8 +14,8 @@
       'nav.optimizer': 'بهینه‌ساز تصویر',
       'nav.removebg': 'حذف پس‌زمینه',
       'pwa.install': 'نصب اپ',
-      'hub.hero.title': 'ابزارهای تصویر، سریع و خصوصی',
-      'hub.hero.subtitle': 'سه ابزار برای کار روزمره با تصویر — جایگذاری قالب، بهینه‌سازی و حذف پس‌زمینه. تمام پردازش داخل مرورگر شما انجام می‌شود و هیچ فایلی به سرور فرستاده نمی‌شود.',
+      'hub.hero.title': 'ابزارهای رایگان تصویر، سریع و خصوصی',
+      'hub.hero.subtitle': 'جایگذاری قالب و واترمارک، بهینه‌سازی و تبدیل فرمت، و حذف پس‌زمینه — همه رایگان، بدون نصب و کاملاً در مرورگر شما. تصاویرتان هرگز آپلود نمی‌شوند.',
 
       'hub.place.title': 'جایگذاری قالب روی تصاویر',
       'hub.place.desc': 'قالب، واترمارک یا امضات رو یک‌بار آپلود کن و به‌صورت دسته‌ای روی ده‌ها تصویر بنداز؛ خروجی یک فایل ZIP تمیز.',
@@ -41,7 +41,7 @@
       'hub.bg.cta': 'حذف پس‌زمینه‌ی تصویر',
 
       'hub.badge': 'رایگان',
-      'hub.privacy': 'همه‌ی پردازش‌ها داخل مرورگر شما انجام می‌شود؛ هیچ فایلی آپلود نمی‌شود.',
+      'hub.privacy': 'تصاویر شما هرگز آپلود نمی‌شوند — همه‌ی پردازش داخل مرورگر خودتان انجام می‌شود.',
       'footer.credit': 'ساخته شده به وسیله',
     },
     en: {
@@ -52,8 +52,8 @@
       'nav.optimizer': 'Image Optimizer',
       'nav.removebg': 'Remove Background',
       'pwa.install': 'Install',
-      'hub.hero.title': 'Image tools, fast and private',
-      'hub.hero.subtitle': 'Three everyday image tools — frame placement, optimization and background removal. Every step runs in your browser and no file is ever sent to a server.',
+      'hub.hero.title': 'Free image tools, fast and private',
+      'hub.hero.subtitle': 'Frame & watermark placement, optimization & format conversion, and background removal — all free, no install, entirely in your browser. Your images are never uploaded.',
 
       'hub.place.title': 'Frame & Watermark Placement',
       'hub.place.desc': 'Upload your frame, watermark or signature once and batch-apply it across dozens of images — output is one clean ZIP.',
@@ -79,7 +79,7 @@
       'hub.bg.cta': 'Remove Background',
 
       'hub.badge': 'Free',
-      'hub.privacy': 'Everything runs in your browser; no file is ever uploaded.',
+      'hub.privacy': 'Your images are never uploaded — everything runs in your own browser.',
       'footer.credit': 'Made by',
     }
   };
