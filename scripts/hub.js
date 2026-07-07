@@ -14,7 +14,7 @@
       'nav.optimizer': 'بهینه‌ساز تصویر',
       'nav.removebg': 'حذف پس‌زمینه',
       'pwa.install': 'نصب اپ',
-      'hub.hero.title': 'ابزارهای رایگان تصویر، سریع و خصوصی',
+      'hub.hero.title': 'ابزارهای رایگان تصویر، هر آنچه برای تصویرهات لازم داری',
       'hub.hero.subtitle': 'جایگذاری قالب و واترمارک، بهینه‌سازی و تبدیل فرمت، و حذف پس‌زمینه — همه رایگان، بدون نصب و کاملاً در مرورگر شما. تصاویرتان هرگز آپلود نمی‌شوند.',
 
       'hub.place.title': 'جایگذاری قالب روی تصاویر',
@@ -52,7 +52,7 @@
       'nav.optimizer': 'Image Optimizer',
       'nav.removebg': 'Remove Background',
       'pwa.install': 'Install',
-      'hub.hero.title': 'Free image tools, fast and private',
+      'hub.hero.title': 'Free image tools — everything your images need',
       'hub.hero.subtitle': 'Frame & watermark placement, optimization & format conversion, and background removal — all free, no install, entirely in your browser. Your images are never uploaded.',
 
       'hub.place.title': 'Frame & Watermark Placement',
