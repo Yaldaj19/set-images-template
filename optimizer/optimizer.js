@@ -13,6 +13,7 @@
       'opt.tagline': 'بهینه‌سازی و تبدیل فرمت تصاویر در مرورگر',
       'nav.placement': 'جایگذاری قالب',
       'nav.optimizer': 'بهینه‌ساز تصویر',
+      'nav.removebg': 'حذف پس‌زمینه',
       'opt.hero.title': 'بهینه‌سازی هوشمند تصاویر، با حفظ کیفیت',
       'opt.hero.subtitle': 'تبدیل فرمت، فشرده‌سازی و تغییر ابعاد تصاویر JPEG، PNG، WebP و AVIF در یک ابزار سریع و امن — تمام پردازش در مرورگر شما انجام می‌شود و فایل‌ها هرگز به سرور ارسال نمی‌شوند.',
       'opt.drop.cta': 'یک تصویر رو اینجا بنداز یا کلیک کن',
@@ -68,11 +69,17 @@
       'opt.edit.label': 'ویرایش تصویر',
       'opt.edit.crop': 'برش',
       'opt.edit.removeBg': 'حذف پس‌زمینه',
+      'opt.edit.removeBgAi': 'با هوش مصنوعی',
+      'opt.edit.removeBgAiTitle': 'اگه ابزار ساده نتونست پس‌زمینه رو برداره، با هوش مصنوعی تشخیص بده',
       'opt.edit.reset': 'بازگردانی',
-      'opt.edit.bgProcessing': 'در حال حذف پس‌زمینه…',
-      'opt.edit.bgLoading': 'بارگذاری مدل هوش مصنوعی…',
-      'opt.edit.bgProgress': 'پردازش… {p}٪',
-      'opt.edit.bgDone': 'پس‌زمینه حذف شد ✓',
+      'opt.edit.bgBtnBusy': 'در حال پردازش…',
+      'opt.edit.bgLocalStart': 'در حال حذف پس‌زمینه…',
+      'opt.edit.bgLocalDone': 'پس‌زمینه حذف شد ✓',
+      'opt.edit.bgLocalWeak': 'پس‌زمینه‌ی یکدست پیدا نشد — دکمه‌ی «با هوش مصنوعی» رو امتحان کن',
+      'opt.edit.bgAiLoading': 'بارگذاری مدل هوش مصنوعی…',
+      'opt.edit.bgAiStart': 'حذف پس‌زمینه با هوش مصنوعی…',
+      'opt.edit.bgAiProgress': 'هوش مصنوعی… {p}٪',
+      'opt.edit.bgAiDone': 'پس‌زمینه با هوش مصنوعی حذف شد ✓',
       'opt.edit.bgFailed': 'حذف پس‌زمینه ناموفق بود — اتصال اینترنت رو چک کن',
       'opt.crop.title': 'برش تصویر',
       'opt.crop.free': 'آزاد',
@@ -101,6 +108,7 @@
       'opt.tagline': 'Image optimization & format conversion in your browser',
       'nav.placement': 'Frame Tool',
       'nav.optimizer': 'Image Optimizer',
+      'nav.removebg': 'Remove Background',
       'opt.hero.title': 'Smart image optimization, quality preserved',
       'opt.hero.subtitle': 'Compress, convert and resize JPEG, PNG, WebP and AVIF in one fast, privacy-first tool — every step runs in your browser and your files never leave your device.',
       'opt.drop.cta': 'Drop an image here or click to browse',
@@ -156,11 +164,17 @@
       'opt.edit.label': 'Edit image',
       'opt.edit.crop': 'Crop',
       'opt.edit.removeBg': 'Remove background',
+      'opt.edit.removeBgAi': 'With AI',
+      'opt.edit.removeBgAiTitle': 'If the simple tool can\'t detect the background, use AI',
       'opt.edit.reset': 'Undo edits',
-      'opt.edit.bgProcessing': 'Removing background…',
-      'opt.edit.bgLoading': 'Loading AI model…',
-      'opt.edit.bgProgress': 'Processing… {p}%',
-      'opt.edit.bgDone': 'Background removed ✓',
+      'opt.edit.bgBtnBusy': 'Processing…',
+      'opt.edit.bgLocalStart': 'Removing background…',
+      'opt.edit.bgLocalDone': 'Background removed ✓',
+      'opt.edit.bgLocalWeak': 'No solid background found — try the “With AI” button',
+      'opt.edit.bgAiLoading': 'Loading AI model…',
+      'opt.edit.bgAiStart': 'Removing background with AI…',
+      'opt.edit.bgAiProgress': 'AI… {p}%',
+      'opt.edit.bgAiDone': 'Background removed with AI ✓',
       'opt.edit.bgFailed': 'Background removal failed — check your connection',
       'opt.crop.title': 'Crop image',
       'opt.crop.free': 'Free',
@@ -222,6 +236,9 @@
     document.querySelectorAll('[data-i18n-option]').forEach((el) => {
       el.textContent = t(el.getAttribute('data-i18n-option'));
     });
+    document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+      el.title = t(el.getAttribute('data-i18n-title'));
+    });
     document.title = t('opt.title');
     document.querySelectorAll('[data-lang-btn]').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-lang-btn') === currentLang);
@@ -268,6 +285,29 @@
       el.style.transition = 'opacity .3s ease';
       setTimeout(() => el.remove(), 300);
     }, ttl);
+  }
+
+  // A persistent toast with a spinner — for long tasks. Returns { update, close }.
+  function toastSticky(msg) {
+    const root = document.getElementById('toast-container');
+    if (!root) return { update() {}, close() {} };
+    const el = document.createElement('div');
+    el.className = 'toast-item glass-card pointer-events-auto px-4 py-2.5 text-sm font-semibold flex items-center gap-2.5';
+    const sp = document.createElement('span');
+    sp.className = 'spinner-sm';
+    const txt = document.createElement('span');
+    txt.textContent = msg;
+    el.appendChild(sp);
+    el.appendChild(txt);
+    root.appendChild(el);
+    return {
+      update(m) { txt.textContent = m; },
+      close() {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity .3s ease';
+        setTimeout(() => el.remove(), 300);
+      },
+    };
   }
 
   /* ========== State ========== */
@@ -1282,27 +1322,112 @@
     runCompression();
   }
 
-  /* ========== Background removal (client-side, @imgly, private) ========== */
-  async function removeBackground() {
-    if (!workingBlob || bgProcessing) return;
-    bgProcessing = true;
+  /* ========== Background removal ========== */
+  function setBgBusy(busy) {
+    bgProcessing = busy;
+    if (els.bgBtn) els.bgBtn.disabled = busy;
+    if (els.bgAiBtn) els.bgAiBtn.disabled = busy;
+    if (els.cropBtn) els.cropBtn.disabled = busy;
+  }
+
+  // --- Method 1: no AI. Edge flood-fill on a sampled background colour.
+  //     Great for solid / near-solid backgrounds (product shots on white, etc.).
+  //     Returns the number of pixels made transparent.
+  function floodRemoveBackground(imgData, w, h) {
+    const data = imgData.data;
+    // Reference background colour = average of the border ring
+    let br = 0, bg = 0, bb = 0, count = 0;
+    const add = (x, y) => { const i = (y * w + x) * 4; br += data[i]; bg += data[i + 1]; bb += data[i + 2]; count++; };
+    for (let x = 0; x < w; x++) { add(x, 0); add(x, h - 1); }
+    for (let y = 0; y < h; y++) { add(0, y); add(w - 1, y); }
+    br = br / count; bg = bg / count; bb = bb / count;
+
+    const T2 = 62 * 62;              // squared colour-distance tolerance
+    const N = w * h;
+    const visited = new Uint8Array(N);
+    const stack = [];
+    for (let x = 0; x < w; x++) { stack.push(x); stack.push(x + (h - 1) * w); }
+    for (let y = 0; y < h; y++) { stack.push(y * w); stack.push(w - 1 + y * w); }
+
+    let removed = 0;
+    while (stack.length) {
+      const idx = stack.pop();
+      if (visited[idx]) continue;
+      visited[idx] = 1;
+      const p = idx * 4;
+      const dr = data[p] - br, dg = data[p + 1] - bg, db = data[p + 2] - bb;
+      if (dr * dr + dg * dg + db * db > T2) continue;   // hit the subject → stop spreading
+      if (data[p + 3] !== 0) removed++;
+      data[p + 3] = 0;
+      const x = idx % w, y = (idx / w) | 0;
+      if (x > 0) stack.push(idx - 1);
+      if (x < w - 1) stack.push(idx + 1);
+      if (y > 0) stack.push(idx - w);
+      if (y < h - 1) stack.push(idx + w);
+    }
+    return removed;
+  }
+
+  async function removeBackgroundLocal() {
+    if (!workingBitmap || bgProcessing) return;
+    setBgBusy(true);
     els.bgBtn.classList.add('is-loading');
-    els.bgBtn.disabled = true;
-    if (els.cropBtn) els.cropBtn.disabled = true;
+    const note = toastSticky(t('opt.edit.bgLocalStart'));
+    // Let the toast paint before the (blocking) pixel work
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const w = workingBitmap.width, h = workingBitmap.height;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(workingBitmap, 0, 0);
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const removed = floodRemoveBackground(imgData, w, h);
+      note.close();
+      if (removed / (w * h) < 0.02) {
+        // Barely anything removed → not a flat background; nudge toward AI
+        toast(t('opt.edit.bgLocalWeak'), 'info', 5000);
+        if (els.bgAiBtn) {
+          els.bgAiBtn.classList.add('opt-tool-btn-pulse');
+          setTimeout(() => els.bgAiBtn.classList.remove('opt-tool-btn-pulse'), 4000);
+        }
+        return;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      if (els.codec.value === 'jpeg') { els.codec.value = 'png'; updateCodecUI(); }
+      await applyWorkingImage(canvas);
+      toast(t('opt.edit.bgLocalDone'));
+    } catch (err) {
+      console.error('Local background removal failed:', err);
+      note.close();
+      toast(t('toast.encodeFailed'), 'error');
+    } finally {
+      els.bgBtn.classList.remove('is-loading');
+      setBgBusy(false);
+    }
+  }
+
+  // --- Method 2: AI (client-side @imgly). Private, no upload; downloads a model on first use.
+  async function removeBackgroundAI() {
+    if (!workingBlob || bgProcessing) return;
+    setBgBusy(true);
+    els.bgAiBtn.classList.add('is-loading');
+    els.bgAiBtn.classList.remove('opt-tool-btn-pulse');
+    const note = toastSticky(t('opt.edit.bgAiLoading'));
     try {
       if (!bgModule) {
-        if (els.bgProgress) els.bgProgress.textContent = t('opt.edit.bgLoading');
         bgModule = await import(
           /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm'
         );
       }
       const remove = bgModule.removeBackground || (bgModule.default && bgModule.default.removeBackground);
       if (typeof remove !== 'function') throw new Error('removeBackground export not found');
+      note.update(t('opt.edit.bgAiStart'));
       const config = {
         progress: (key, current, total) => {
-          if (!els.bgProgress) return;
           const pct = total ? Math.round((current / total) * 100) : 0;
-          els.bgProgress.textContent = t('opt.edit.bgProgress', { p: pct });
+          note.update(t('opt.edit.bgAiProgress', { p: pct }));
         },
       };
       const resultBlob = await remove(workingBlob, config);
@@ -1312,22 +1437,17 @@
       canvas.height = bmp.height;
       canvas.getContext('2d').drawImage(bmp, 0, 0);
       if (bmp.close) bmp.close();
-      // Transparency needs an alpha-capable codec — JPEG would flatten it to black/white.
-      if (els.codec.value === 'jpeg') {
-        els.codec.value = 'png';
-        updateCodecUI();
-      }
+      if (els.codec.value === 'jpeg') { els.codec.value = 'png'; updateCodecUI(); }
       await applyWorkingImage(canvas);
-      toast(t('opt.edit.bgDone'));
+      note.close();
+      toast(t('opt.edit.bgAiDone'));
     } catch (err) {
-      console.error('Background removal failed:', err);
+      console.error('AI background removal failed:', err);
+      note.close();
       toast(t('opt.edit.bgFailed'), 'error');
     } finally {
-      bgProcessing = false;
-      els.bgBtn.classList.remove('is-loading');
-      els.bgBtn.disabled = false;
-      if (els.cropBtn) els.cropBtn.disabled = false;
-      if (els.bgProgress) els.bgProgress.textContent = t('opt.edit.bgProcessing');
+      els.bgAiBtn.classList.remove('is-loading');
+      setBgBusy(false);
     }
   }
 
@@ -1493,7 +1613,8 @@
 
   function bindEditTools() {
     if (els.cropBtn) els.cropBtn.addEventListener('click', openCrop);
-    if (els.bgBtn) els.bgBtn.addEventListener('click', removeBackground);
+    if (els.bgBtn) els.bgBtn.addEventListener('click', removeBackgroundLocal);
+    if (els.bgAiBtn) els.bgAiBtn.addEventListener('click', removeBackgroundAI);
     if (els.editReset) els.editReset.addEventListener('click', resetEdits);
 
     if (els.cropClose) els.cropClose.addEventListener('click', closeCrop);
@@ -1566,7 +1687,7 @@
     // Edit tools (crop + background removal)
     els.cropBtn = document.getElementById('opt-crop-btn');
     els.bgBtn = document.getElementById('opt-bg-btn');
-    els.bgProgress = document.getElementById('opt-bg-progress');
+    els.bgAiBtn = document.getElementById('opt-bg-ai-btn');
     els.editReset = document.getElementById('opt-edit-reset');
     els.cropModal = document.getElementById('opt-crop-modal');
     els.cropBackdrop = document.getElementById('opt-crop-backdrop');

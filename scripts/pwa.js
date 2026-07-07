@@ -3,10 +3,14 @@
 (function () {
   'use strict';
 
-  /* ---- Service worker ---- */
+  /* ---- Service worker ----
+     Pages live at different depths (/, /placement/, …); each sets
+     window.__SW_PATH__ to the correct relative path to the root sw.js.
+     The SW file sits at the app root, so its scope covers every tool. */
   if ('serviceWorker' in navigator) {
+    var swPath = window.__SW_PATH__ || 'sw.js';
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function (err) {
+      navigator.serviceWorker.register(swPath).catch(function (err) {
         console.warn('[pwa] service worker registration failed:', err);
       });
     });

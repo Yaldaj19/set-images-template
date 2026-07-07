@@ -831,6 +831,20 @@
 .opt-tool-btn.is-loading .btn-default { display: none; }
 .opt-tool-btn.is-loading .btn-loading { display: inline-flex; }
 .opt-tool-btn.is-loading { cursor: progress; }
+/* AI variant — a touch more emphasis than the plain local button */
+.opt-tool-btn-ai {
+  background: linear-gradient(135deg, rgba(6, 212, 255, 0.14), rgba(34, 224, 255, 0.06));
+  border-color: rgba(6, 212, 255, 0.4);
+}
+.opt-tool-btn-ai:hover {
+  background: linear-gradient(135deg, rgba(6, 212, 255, 0.24), rgba(34, 224, 255, 0.12));
+}
+/* Attention pulse when the local tool fails and we suggest AI */
+.opt-tool-btn-pulse { animation: opt-tool-pulse 1s ease-in-out 0s 3; }
+@keyframes opt-tool-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6, 212, 255, 0); }
+  50% { box-shadow: 0 0 0 5px rgba(6, 212, 255, 0.35); }
+}
 
 /* ============ Crop modal ============ */
 .opt-crop-modal {

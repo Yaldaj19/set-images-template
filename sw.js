@@ -1,14 +1,16 @@
 /* Service worker — app-shell cache for the Set-Images-template PWA.
    IMPORTANT: bump CACHE on every deploy so clients receive fresh files. */
-const CACHE = 'sit-shell-v9';
+const CACHE = 'sit-shell-v10';
 
+// Precache the home hub shell. Tool pages (placement/optimizer/remove-bg) and
+// their assets are cached on demand by the fetch handler below.
 const APP_SHELL = [
   'index.html',
   'offline.html',
   'manifest.json',
-  'styles/main.css?v=20260707a',
-  'scripts/bundle.js?v=20260707a',
-  'scripts/pwa.js?v=20260707a',
+  'styles/main.css?v=20260707b',
+  'scripts/hub.js?v=20260707b',
+  'scripts/pwa.js?v=20260707b',
   'assets/favicon.ico',
   'assets/Set-Images-template-logo.webp',
   'assets/icons/icon-192.png',
