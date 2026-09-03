@@ -68,6 +68,8 @@
       'opt.resize.lock': 'حفظ نسبت',
       'opt.edit.label': 'ویرایش تصویر',
       'opt.edit.crop': 'برش',
+      'opt.edit.flipH': 'قرینه افقی',
+      'opt.edit.flipV': 'قرینه عمودی',
       'opt.edit.removeBg': 'حذف پس‌زمینه',
       'opt.edit.removeBgAi': 'با هوش مصنوعی',
       'opt.edit.removeBgAiTitle': 'اگه ابزار ساده نتونست پس‌زمینه رو برداره، با هوش مصنوعی تشخیص بده',
@@ -163,6 +165,8 @@
       'opt.resize.lock': 'Lock ratio',
       'opt.edit.label': 'Edit image',
       'opt.edit.crop': 'Crop',
+      'opt.edit.flipH': 'Flip horizontal',
+      'opt.edit.flipV': 'Flip vertical',
       'opt.edit.removeBg': 'Remove background',
       'opt.edit.removeBgAi': 'With AI',
       'opt.edit.removeBgAiTitle': 'If the simple tool can\'t detect the background, use AI',
@@ -511,6 +515,12 @@
     canvas.width = outW;
     canvas.height = outH;
     const ctx = canvas.getContext('2d');
+    // JPEG has no alpha channel — paint a white backdrop first so transparent
+    // areas become white instead of black when converting PNG/WebP → JPEG.
+    if (codec === 'jpeg') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, outW, outH);
+    }
     ctx.drawImage(bitmap, 0, 0, outW, outH);
 
     if (codec === 'png') return await canvasToBlob(canvas, 'image/png');
@@ -1091,12 +1101,17 @@
           if (bitmap.close) bitmap.close();
 
           const noResize = !opts.width && !opts.height;
-          const useOriginal = noResize && blob.size >= it.file.size;
-          const finalBlob = useOriginal ? it.file : blob;
-
           const baseName = (it.file.name || 'image').replace(/\.[^.]+$/, '');
           const origExt = ((it.file.name || '').match(/\.([^.]+)$/) || [, ''])[1] || 'bin';
-          const ext = useOriginal ? origExt : (EXT_BY_CODEC[opts.codec] || 'bin');
+          const outExt = EXT_BY_CODEC[opts.codec] || 'bin';
+          // Only fall back to the original file for a size win when the format is
+          // UNCHANGED. A deliberate format change (e.g. JPG → PNG) must always be
+          // honoured — even if the converted file ends up larger.
+          const sameFormat =
+            origExt.toLowerCase() === outExt || (outExt === 'jpg' && /^jpe?g$/i.test(origExt));
+          const useOriginal = noResize && sameFormat && blob.size >= it.file.size;
+          const finalBlob = useOriginal ? it.file : blob;
+          const ext = useOriginal ? origExt : outExt;
           let name = baseName + '.' + ext;
           let counter = 2;
           while (usedNames.has(name)) {
@@ -1328,6 +1343,8 @@
     if (els.bgBtn) els.bgBtn.disabled = busy;
     if (els.bgAiBtn) els.bgAiBtn.disabled = busy;
     if (els.cropBtn) els.cropBtn.disabled = busy;
+    if (els.flipHBtn) els.flipHBtn.disabled = busy;
+    if (els.flipVBtn) els.flipVBtn.disabled = busy;
   }
 
   // --- Method 1: no AI. Edge flood-fill on a sampled background colour.
@@ -1611,8 +1628,30 @@
     await applyWorkingImage(canvas);
   }
 
+  /* ========== Flip / mirror ========== */
+  // axis: 'h' = horizontal (left↔right), 'v' = vertical (top↕bottom)
+  async function flipImage(axis) {
+    if (!workingBitmap || bgProcessing) return;
+    const w = workingBitmap.width, h = workingBitmap.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (axis === 'v') {
+      ctx.translate(0, h);
+      ctx.scale(1, -1);
+    } else {
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(workingBitmap, 0, 0);
+    await applyWorkingImage(canvas);
+  }
+
   function bindEditTools() {
     if (els.cropBtn) els.cropBtn.addEventListener('click', openCrop);
+    if (els.flipHBtn) els.flipHBtn.addEventListener('click', () => flipImage('h'));
+    if (els.flipVBtn) els.flipVBtn.addEventListener('click', () => flipImage('v'));
     if (els.bgBtn) els.bgBtn.addEventListener('click', removeBackgroundLocal);
     if (els.bgAiBtn) els.bgAiBtn.addEventListener('click', removeBackgroundAI);
     if (els.editReset) els.editReset.addEventListener('click', resetEdits);
@@ -1686,6 +1725,8 @@
 
     // Edit tools (crop + background removal)
     els.cropBtn = document.getElementById('opt-crop-btn');
+    els.flipHBtn = document.getElementById('opt-flip-h-btn');
+    els.flipVBtn = document.getElementById('opt-flip-v-btn');
     els.bgBtn = document.getElementById('opt-bg-btn');
     els.bgAiBtn = document.getElementById('opt-bg-ai-btn');
     els.editReset = document.getElementById('opt-edit-reset');
