@@ -401,6 +401,7 @@
     if (els.hero) els.hero.classList.add('hidden');
     if (els.batchWorkspace) els.batchWorkspace.classList.add('hidden');
     els.workspace.classList.remove('hidden');
+    hideSticky(); // stays hidden until the first result is ready
   }
 
   function hideWorkspace() {
@@ -433,6 +434,7 @@
     }
     els.download.disabled = true;
     els.input.value = '';
+    hideSticky();
   }
 
   async function loadFile(file) {
@@ -575,12 +577,15 @@
       }
 
       els.download.disabled = false;
+      if (els.stickySavings) els.stickySavings.textContent = t('opt.savingsPill', { n: savings.toFixed(0) });
+      showSticky('single');
     } catch (err) {
       if (myGen !== compressGen) return;
       console.error(err);
       els.compressedPlaceholder.classList.remove('hidden');
       els.compressedPlaceholder.textContent = t('toast.encodeFailed');
       els.compressedImg.style.opacity = '0.35';
+      hideSticky();
       toast(t('toast.encodeFailed'), 'error');
     }
   }
@@ -742,6 +747,7 @@
     if (els.hero) els.hero.classList.add('hidden');
     if (els.workspace) els.workspace.classList.add('hidden');
     if (els.batchWorkspace) els.batchWorkspace.classList.remove('hidden');
+    hideSticky(); // shown after a batch is processed
   }
 
   function hideBatchWorkspace() {
@@ -767,6 +773,7 @@
       els.batchProcess.classList.remove('is-loading');
       if (els.batchProcessLabel) els.batchProcessLabel.textContent = t('opt.batch.compress');
     }
+    hideSticky();
     if (!silent) updateBatchProcessBtn();
   }
 
@@ -938,6 +945,10 @@
         ? t('opt.batch.stats.processedFailed', { n: succeeded, f: failed })
         : t('opt.batch.stats.processed', { n: succeeded });
     }
+    if (els.stickyBatchSavings) {
+      els.stickyBatchSavings.textContent = t('opt.savingsPill', { n: Math.max(0, pct).toFixed(0) });
+    }
+    showSticky('batch');
   }
 
   function downloadSingleCompressed(idx) {
@@ -1782,6 +1793,33 @@
     els.bResizeW = document.getElementById('opt-b-resize-w');
     els.bResizeH = document.getElementById('opt-b-resize-h');
     els.bResizeLock = document.getElementById('opt-b-resize-lock');
+
+    // Sticky bottom action bar
+    els.stickyBar = document.getElementById('opt-sticky-bar');
+    els.stickySingle = document.getElementById('opt-sticky-single');
+    els.stickyBatch = document.getElementById('opt-sticky-batch');
+    els.stickySavings = document.getElementById('opt-sticky-savings');
+    els.stickyDownload = document.getElementById('opt-sticky-download');
+    els.stickyBatchSavings = document.getElementById('opt-sticky-batch-savings');
+    els.stickyBatchDownload = document.getElementById('opt-sticky-batch-download');
+  }
+
+  /* ========== Sticky action bar (shown once a result is ready) ========== */
+  function showSticky(mode) {
+    if (!els.stickyBar) return;
+    const single = mode === 'single';
+    if (els.stickySingle) els.stickySingle.classList.toggle('hidden', !single);
+    if (els.stickyBatch) els.stickyBatch.classList.toggle('hidden', single);
+    els.stickyBar.classList.remove('hidden');
+    els.stickyBar.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('opt-has-sticky');
+  }
+
+  function hideSticky() {
+    if (!els.stickyBar) return;
+    els.stickyBar.classList.add('hidden');
+    els.stickyBar.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('opt-has-sticky');
   }
 
   function init() {
@@ -1817,6 +1855,8 @@
 
     els.reset.addEventListener('click', hideWorkspace);
     els.download.addEventListener('click', triggerDownload);
+    if (els.stickyDownload) els.stickyDownload.addEventListener('click', triggerDownload);
+    if (els.stickyBatchDownload) els.stickyBatchDownload.addEventListener('click', downloadBatchZip);
 
     document.querySelectorAll('[data-lang-btn]').forEach((b) => {
       b.addEventListener('click', () => setLang(b.getAttribute('data-lang-btn')));

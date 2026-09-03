@@ -119,7 +119,7 @@
   </script>
 
   <link rel="stylesheet" href="../styles/main.css?v=20260707f" />
-  <link rel="stylesheet" href="optimizer.css?v=20260707f" />
+  <link rel="stylesheet" href="optimizer.css?v=20260903a" />
   <script defer src="../vendor/jszip-3.10.1.min.js?v=20260707f"></script>
 </head>
 
@@ -647,6 +647,32 @@
           <button id="opt-crop-cancel" type="button" class="btn-ghost text-sm" data-i18n="opt.crop.cancel">لغو</button>
           <button id="opt-crop-apply" type="button" class="action-btn" data-i18n="opt.crop.apply">اعمال برش</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STICKY BOTTOM ACTION BAR ============ -->
+  <div id="opt-sticky-bar" class="opt-sticky-bar hidden" aria-hidden="true">
+    <div class="opt-sticky-inner container mx-auto">
+      <!-- Single-image mode -->
+      <div id="opt-sticky-single" class="opt-sticky-group hidden">
+        <span id="opt-sticky-savings" class="opt-sticky-savings">—</span>
+        <button id="opt-sticky-download" class="action-btn opt-sticky-btn">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>
+          </svg>
+          <span data-i18n="opt.download">دانلود</span>
+        </button>
+      </div>
+      <!-- Batch mode -->
+      <div id="opt-sticky-batch" class="opt-sticky-group hidden">
+        <span id="opt-sticky-batch-savings" class="opt-sticky-savings">—</span>
+        <button id="opt-sticky-batch-download" class="action-btn opt-sticky-btn">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>
+          </svg>
+          <span data-i18n="opt.batch.downloadZip">دانلود ZIP</span>
+        </button>
       </div>
     </div>
   </div>
