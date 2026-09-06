@@ -331,7 +331,7 @@
   let lastCompressedUrl = null;
   let compressGen = 0;
   let compressDebounceTimer = null;
-  let avifWasmModule = null;
+  let avifEncoderPromise = null;  // cached self-hosted AVIF emscripten module
   let bgModule = null;            // cached @imgly/background-removal module
   let bgProcessing = false;
 
@@ -490,22 +490,46 @@
     });
   }
 
-  async function encodeAvifNativeOrWasm(canvas, quality) {
-    // 1) Try browser-native AVIF
-    try {
-      const blob = await canvasToBlob(canvas, 'image/avif', quality / 100);
-      if (blob && blob.type === 'image/avif' && blob.size > 0) return blob;
-    } catch (_) {}
-    // 2) Fallback to @jsquash/avif from CDN
-    if (!avifWasmModule) {
-      avifWasmModule = await import(
-        /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@jsquash/avif@1.4.0/+esm'
-      );
+  // Self-hosted AVIF encoder (emscripten single-threaded build vendored under
+  // ./vendor/avif). We do NOT use canvas.toBlob('image/avif') because browsers
+  // silently fall back to PNG, and we do NOT hit a CDN at runtime (jsdelivr is
+  // unreachable from some networks, which broke AVIF entirely before).
+  function loadAvifEncoder() {
+    if (!avifEncoderPromise) {
+      const base = new URL('./vendor/avif/', document.currentScript ? document.currentScript.src : location.href);
+      avifEncoderPromise = import(/* @vite-ignore */ new URL('avif_enc.js', base).href)
+        .then((mod) => mod.default({ locateFile: () => new URL('avif_enc.wasm', base).href }));
     }
+    return avifEncoderPromise;
+  }
+
+  async function encodeAvif(canvas, quality) {
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const buffer = await avifWasmModule.encode(imageData, { quality });
-    return new Blob([buffer], { type: 'image/avif' });
+    const module = await loadAvifEncoder();
+    const output = module.encode(
+      new Uint8Array(imageData.data.buffer),
+      imageData.width,
+      imageData.height,
+      // Emscripten encoder options — mirror @jsquash defaults, map UI quality (0-100).
+      {
+        quality: Math.max(0, Math.min(100, quality)),
+        qualityAlpha: -1,
+        denoiseLevel: 0,
+        tileColsLog2: 0,
+        tileRowsLog2: 0,
+        speed: 6,
+        subsample: 1,
+        chromaDeltaQ: false,
+        sharpness: 0,
+        tune: 0,
+        enableSharpYUV: false,
+        bitDepth: 8,
+        lossless: false,
+      }
+    );
+    if (!output) throw new Error('AVIF encoding returned no data');
+    return new Blob([output.buffer || output], { type: 'image/avif' });
   }
 
   async function compressBitmap(bitmap, options) {
@@ -528,7 +552,7 @@
     if (codec === 'png') return await canvasToBlob(canvas, 'image/png');
     if (codec === 'webp') return await canvasToBlob(canvas, 'image/webp', quality / 100);
     if (codec === 'jpeg') return await canvasToBlob(canvas, 'image/jpeg', quality / 100);
-    if (codec === 'avif') return await encodeAvifNativeOrWasm(canvas, quality);
+    if (codec === 'avif') return await encodeAvif(canvas, quality);
     throw new Error('Unknown codec: ' + codec);
   }
 
