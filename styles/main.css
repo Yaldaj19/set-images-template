@@ -151,6 +151,19 @@ body {
 @media (max-width: 640px) {
   .tool-nav-btn { padding: 6px 10px; }
   .tool-nav-btn span { font-size: 11px; }
+  /* Keep the 3-tab switcher inside the viewport — scroll it internally instead
+     of overflowing the page (which produced a horizontal scrollbar and left
+     fixed bottom bars floating above it). */
+  .tool-nav {
+    max-width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .tool-nav::-webkit-scrollbar { display: none; }
+  .tool-nav-btn { flex: 0 0 auto; }
 }
 
 /* ============ Step labels ============ */

@@ -143,7 +143,7 @@
   function detectInitialTheme() {
     const saved = localStorage.getItem(LS_THEME);
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'dark'; // default to dark
   }
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);

@@ -191,12 +191,25 @@
 }
 .rbg-actionbar .rbg-btn-lg { flex: 0 1 auto !important; }
 /* Room so the fixed bar never covers the preview / tip */
-body.rbg-has-bar main { padding-bottom: 172px; }
+body.rbg-has-bar main { padding-bottom: 150px; }
 @media (min-width: 640px) { body.rbg-has-bar main { padding-bottom: 108px; } }
 @media (min-width: 1024px) { body.rbg-has-bar main { padding-bottom: 92px; } }
-/* Keep mobile toasts clear of the bar */
+
+/* Compact the fixed bar on phones so it doesn't dominate the screen */
 @media (max-width: 639px) {
-  body.rbg-has-bar #toast-container { bottom: calc(180px + env(safe-area-inset-bottom, 0px)); }
+  .rbg-actionbar { padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .rbg-actionbar-inner { padding-inline: 4px; gap: 6px; }
+  .rbg-edit-label { display: none; }
+  .rbg-edit-tools { width: 100%; gap: 6px; justify-content: space-between; }
+  .rbg-tool-btn { flex: 1 1 auto; justify-content: center; padding: 7px 8px; font-size: 0.72rem; gap: 5px; border-radius: 9px; }
+  .rbg-actionbar .rbg-actions { width: 100%; gap: 6px; margin-inline-start: 0; }
+  .rbg-actionbar .rbg-actions .action-btn { flex: 1 1 auto; min-width: 0; padding: 9px 8px; font-size: 0.78rem; }
+  .rbg-actionbar .rbg-actions .action-btn svg { width: 16px; height: 16px; }
+  .rbg-actionbar .rbg-btn-lg { flex: 1 1 100% !important; }   /* primary action on its own row */
+  /* Shorter preview panes so both stacks + the bar fit without overflow */
+  .rbg-pane-canvas { min-height: 150px; max-height: 40vh; }
+  .rbg-pane-canvas img { max-height: 40vh; }
+  body.rbg-has-bar #toast-container { bottom: calc(158px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ============ Crop modal (ported from optimizer) ============ */
