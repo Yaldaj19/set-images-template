@@ -29,6 +29,15 @@
       'rbg.aiTitle': 'اگه حالت ساده نتونست پس‌زمینه رو برداره، با هوش مصنوعی امتحان کن',
       'rbg.busy': 'در حال پردازش…',
       'rbg.download': 'دانلود PNG',
+      'rbg.edit.label': 'ویرایش',
+      'rbg.edit.crop': 'برش',
+      'rbg.edit.flipH': 'قرینه افقی',
+      'rbg.edit.flipV': 'قرینه عمودی',
+      'rbg.crop.title': 'برش تصویر',
+      'rbg.crop.free': 'آزاد',
+      'rbg.crop.orig': 'نسبت تصویر',
+      'rbg.crop.cancel': 'لغو',
+      'rbg.crop.apply': 'اعمال برش',
       'rbg.tip': 'نکته: برای عکس‌هایی که پس‌زمینه‌شون یکدست و ساده‌ست (مثل عکس محصول روی سفید)، حالت بدون هوش مصنوعی سریع‌تره. برای سوژه‌های پیچیده «با هوش مصنوعی» رو بزن.',
       'rbg.localStart': 'در حال حذف پس‌زمینه…',
       'rbg.localDone': 'پس‌زمینه حذف شد ✓',
@@ -64,6 +73,15 @@
       'rbg.aiTitle': 'If the simple mode can\'t detect the background, try AI',
       'rbg.busy': 'Processing…',
       'rbg.download': 'Download PNG',
+      'rbg.edit.label': 'Edit',
+      'rbg.edit.crop': 'Crop',
+      'rbg.edit.flipH': 'Flip horizontal',
+      'rbg.edit.flipV': 'Flip vertical',
+      'rbg.crop.title': 'Crop image',
+      'rbg.crop.free': 'Free',
+      'rbg.crop.orig': 'Original ratio',
+      'rbg.crop.cancel': 'Cancel',
+      'rbg.crop.apply': 'Apply crop',
       'rbg.tip': 'Tip: for images with a solid, simple background (like a product on white) the non-AI mode is faster. For complex subjects use “With AI”.',
       'rbg.localStart': 'Removing background…',
       'rbg.localDone': 'Background removed ✓',
@@ -193,12 +211,14 @@
     els.emptyState.classList.add('hidden');
     els.hero.classList.add('hidden');
     els.workspace.classList.remove('hidden');
+    document.body.classList.add('rbg-has-bar');
   }
 
   function resetAll() {
     els.emptyState.classList.remove('hidden');
     els.hero.classList.remove('hidden');
     els.workspace.classList.add('hidden');
+    document.body.classList.remove('rbg-has-bar');
     sourceFile = null;
     if (sourceBitmap && sourceBitmap.close) sourceBitmap.close();
     sourceBitmap = null;
@@ -245,6 +265,207 @@
     els.removeBtn.disabled = v;
     els.removeAiBtn.disabled = v;
     els.reset.disabled = v;
+    if (els.cropBtn) els.cropBtn.disabled = v;
+    if (els.flipHBtn) els.flipHBtn.disabled = v;
+    if (els.flipVBtn) els.flipVBtn.disabled = v;
+  }
+
+  /* ========== Source editing (flip / crop) — operates on the ORIGINAL ==========
+     Flip and crop change the source image itself, so any previous background
+     result is invalidated and the user re-runs removal on the edited source. */
+  async function applySourceCanvas(canvas) {
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+    if (!blob) return;
+    if (sourceBitmap && sourceBitmap.close) sourceBitmap.close();
+    sourceBitmap = await createImageBitmap(canvas);
+    sourceBlob = blob;
+    const base = (sourceFile && sourceFile.name ? sourceFile.name : 'image').replace(/\.[^.]+$/, '');
+    sourceFile = new File([blob], base + '.png', { type: 'image/png' });
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    sourceUrl = URL.createObjectURL(blob);
+    els.originalImg.src = sourceUrl;
+    els.originalInfo.textContent = `${sourceBitmap.width}×${sourceBitmap.height} · ${formatBytes(blob.size)}`;
+    // Invalidate previous result — the source has changed.
+    if (resultUrl) { URL.revokeObjectURL(resultUrl); resultUrl = null; }
+    resultBlob = null;
+    els.resultImg.removeAttribute('src');
+    els.resultInfo.textContent = '—';
+    els.resultPlaceholder.classList.remove('hidden');
+    els.download.disabled = true;
+  }
+
+  // axis: 'h' = horizontal (left↔right), 'v' = vertical (top↕bottom)
+  async function flipSource(axis) {
+    if (!sourceBitmap || busy) return;
+    const w = sourceBitmap.width, h = sourceBitmap.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (axis === 'v') { ctx.translate(0, h); ctx.scale(1, -1); }
+    else { ctx.translate(w, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(sourceBitmap, 0, 0);
+    await applySourceCanvas(canvas);
+  }
+
+  /* ========== Crop tool (interactive) — ported from the optimizer ========== */
+  const crop = { ratio: 'free', box: { x: 0, y: 0, w: 0, h: 0 }, imgW: 0, imgH: 0 };
+  const CROP_MIN = 24;
+  function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function srcW() { return sourceBitmap ? sourceBitmap.width : 0; }
+  function srcH() { return sourceBitmap ? sourceBitmap.height : 0; }
+
+  function cropRatioNumber() {
+    if (crop.ratio === 'free') return null;
+    if (crop.ratio === 'orig') return srcH() ? srcW() / srcH() : null;
+    const n = parseFloat(crop.ratio);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
+  function renderCropBox() {
+    const b = crop.box;
+    els.cropBox.style.left = b.x + 'px';
+    els.cropBox.style.top = b.y + 'px';
+    els.cropBox.style.width = b.w + 'px';
+    els.cropBox.style.height = b.h + 'px';
+    if (els.cropDims && crop.imgW > 0) {
+      const scale = srcW() / crop.imgW;
+      els.cropDims.textContent = Math.round(b.w * scale) + ' × ' + Math.round(b.h * scale) + ' px';
+    }
+  }
+
+  function fitBoxToRatio(keepCenter) {
+    const r = cropRatioNumber();
+    if (!r) return;
+    let { x, y, w, h } = crop.box;
+    const cx = x + w / 2, cy = y + h / 2;
+    if (w / h > r) w = h * r; else h = w / r;
+    if (w > crop.imgW) { w = crop.imgW; h = w / r; }
+    if (h > crop.imgH) { h = crop.imgH; w = h * r; }
+    if (keepCenter) {
+      x = clampNum(cx - w / 2, 0, crop.imgW - w);
+      y = clampNum(cy - h / 2, 0, crop.imgH - h);
+    } else {
+      x = clampNum(x, 0, crop.imgW - w);
+      y = clampNum(y, 0, crop.imgH - h);
+    }
+    crop.box = { x, y, w, h };
+  }
+
+  function setCropRatio(r) {
+    crop.ratio = r;
+    els.cropRatios.forEach((btn) => btn.classList.toggle('active', btn.dataset.ratio === String(r)));
+    els.cropBox.classList.toggle('ratio-locked', cropRatioNumber() != null);
+    fitBoxToRatio(true);
+    renderCropBox();
+  }
+
+  function anchorFor(handle, b) {
+    return { x: handle.indexOf('w') >= 0 ? b.x + b.w : b.x, y: handle.indexOf('n') >= 0 ? b.y + b.h : b.y };
+  }
+
+  function beginCropDrag(handle, ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const startBox = { ...crop.box };
+    const wrapRect = els.cropImgWrap.getBoundingClientRect();
+    const startX = ev.clientX, startY = ev.clientY;
+    const r = cropRatioNumber();
+    function onMove(e) {
+      const px = clampNum(e.clientX - wrapRect.left, 0, crop.imgW);
+      const py = clampNum(e.clientY - wrapRect.top, 0, crop.imgH);
+      let { x, y, w, h } = startBox;
+      if (handle === 'move') {
+        const nx = clampNum(startBox.x + (e.clientX - startX), 0, crop.imgW - startBox.w);
+        const ny = clampNum(startBox.y + (e.clientY - startY), 0, crop.imgH - startBox.h);
+        crop.box = { x: nx, y: ny, w: startBox.w, h: startBox.h };
+      } else if (handle.length === 2) {
+        const a = anchorFor(handle, startBox);
+        let nw = Math.abs(px - a.x);
+        let nh = Math.abs(py - a.y);
+        if (r) { if (nw / nh > r) nw = nh * r; else nh = nw / r; }
+        nw = Math.max(CROP_MIN, nw);
+        nh = Math.max(CROP_MIN, nh);
+        const nx = px < a.x ? a.x - nw : a.x;
+        const ny = py < a.y ? a.y - nh : a.y;
+        crop.box = { x: clampNum(nx, 0, crop.imgW - nw), y: clampNum(ny, 0, crop.imgH - nh), w: nw, h: nh };
+      } else {
+        const right = x + w, bottom = y + h;
+        if (handle === 'e') w = clampNum(px - x, CROP_MIN, crop.imgW - x);
+        else if (handle === 's') h = clampNum(py - y, CROP_MIN, crop.imgH - y);
+        else if (handle === 'w') { const nx2 = clampNum(px, 0, right - CROP_MIN); w = right - nx2; x = nx2; }
+        else if (handle === 'n') { const ny2 = clampNum(py, 0, bottom - CROP_MIN); h = bottom - ny2; y = ny2; }
+        crop.box = { x, y, w, h };
+      }
+      renderCropBox();
+    }
+    function onUp() {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
+  function initCropBox() {
+    crop.imgW = els.cropImg.clientWidth;
+    crop.imgH = els.cropImg.clientHeight;
+    const w = crop.imgW * 0.8, h = crop.imgH * 0.8;
+    crop.box = { x: (crop.imgW - w) / 2, y: (crop.imgH - h) / 2, w, h };
+    if (cropRatioNumber() != null) fitBoxToRatio(true);
+    renderCropBox();
+  }
+
+  function openCrop() {
+    if (!sourceBitmap || busy) return;
+    setCropRatio('free');
+    els.cropImg.src = sourceUrl;
+    els.cropModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (els.cropImg.complete && els.cropImg.naturalWidth) {
+      requestAnimationFrame(initCropBox);
+    } else {
+      const onReady = () => { initCropBox(); els.cropImg.removeEventListener('load', onReady); };
+      els.cropImg.addEventListener('load', onReady);
+    }
+  }
+
+  function closeCrop() {
+    els.cropModal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  async function applyCrop() {
+    if (!sourceBitmap || crop.imgW <= 0) return;
+    const scale = srcW() / crop.imgW;
+    const sx = clampNum(Math.round(crop.box.x * scale), 0, srcW() - 1);
+    const sy = clampNum(Math.round(crop.box.y * scale), 0, srcH() - 1);
+    const sw = clampNum(Math.round(crop.box.w * scale), 1, srcW() - sx);
+    const sh = clampNum(Math.round(crop.box.h * scale), 1, srcH() - sy);
+    const canvas = document.createElement('canvas');
+    canvas.width = sw; canvas.height = sh;
+    canvas.getContext('2d').drawImage(sourceBitmap, sx, sy, sw, sh, 0, 0, sw, sh);
+    closeCrop();
+    await applySourceCanvas(canvas);
+  }
+
+  function bindEditTools() {
+    if (els.cropBtn) els.cropBtn.addEventListener('click', openCrop);
+    if (els.flipHBtn) els.flipHBtn.addEventListener('click', () => flipSource('h'));
+    if (els.flipVBtn) els.flipVBtn.addEventListener('click', () => flipSource('v'));
+    if (els.cropClose) els.cropClose.addEventListener('click', closeCrop);
+    if (els.cropCancel) els.cropCancel.addEventListener('click', closeCrop);
+    if (els.cropBackdrop) els.cropBackdrop.addEventListener('click', closeCrop);
+    if (els.cropApply) els.cropApply.addEventListener('click', applyCrop);
+    els.cropRatios.forEach((btn) => btn.addEventListener('click', () => setCropRatio(btn.dataset.ratio)));
+    if (els.cropBox) {
+      els.cropBox.addEventListener('pointerdown', (e) => {
+        const handle = e.target.classList.contains('rbg-crop-handle') ? e.target.dataset.h : 'move';
+        beginCropDrag(handle, e);
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && els.cropModal && !els.cropModal.classList.contains('hidden')) closeCrop();
+    });
   }
 
   function showResult(canvasOrBlobUrl, blob) {
@@ -411,6 +632,21 @@
     els.removeBtn = document.getElementById('rbg-remove-btn');
     els.removeAiBtn = document.getElementById('rbg-remove-ai-btn');
     els.download = document.getElementById('rbg-download');
+    // Edit tools
+    els.cropBtn = document.getElementById('rbg-crop-btn');
+    els.flipHBtn = document.getElementById('rbg-flip-h-btn');
+    els.flipVBtn = document.getElementById('rbg-flip-v-btn');
+    // Crop modal
+    els.cropModal = document.getElementById('rbg-crop-modal');
+    els.cropBackdrop = document.getElementById('rbg-crop-backdrop');
+    els.cropImg = document.getElementById('rbg-crop-img');
+    els.cropImgWrap = document.getElementById('rbg-crop-imgwrap');
+    els.cropBox = document.getElementById('rbg-crop-box');
+    els.cropClose = document.getElementById('rbg-crop-close');
+    els.cropCancel = document.getElementById('rbg-crop-cancel');
+    els.cropApply = document.getElementById('rbg-crop-apply');
+    els.cropDims = document.getElementById('rbg-crop-dims');
+    els.cropRatios = Array.from(document.querySelectorAll('.rbg-crop-ratio'));
   }
 
   function init() {
@@ -420,6 +656,7 @@
     applyTheme(detectInitialTheme());
 
     bindDropZone();
+    bindEditTools();
     els.removeBtn.addEventListener('click', removeLocal);
     els.removeAiBtn.addEventListener('click', removeAI);
     els.download.addEventListener('click', downloadResult);

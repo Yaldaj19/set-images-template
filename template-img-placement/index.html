@@ -98,6 +98,70 @@
     .theme-icon-moon { display: block; }
     [data-theme="dark"] .theme-icon-sun { display: block; }
     [data-theme="dark"] .theme-icon-moon { display: none; }
+
+    /* ===== Sticky settings / download bar =====
+       Mobile: only a fixed download button (#place-mbar).
+       Desktop (lg+): the whole settings section is pinned to the bottom. */
+    #place-mbar { display: none; }
+    body.place-ready #place-mbar {
+      display: block;
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: 40;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: rgba(255, 255, 255, 0.9);
+      border-top: 1px solid var(--glass-border-light, rgba(15,23,42,0.1));
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      box-shadow: 0 -8px 30px rgba(15, 23, 42, 0.12);
+      animation: place-bar-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    [data-theme="dark"] body.place-ready #place-mbar {
+      background: rgba(10, 13, 24, 0.9);
+      border-top-color: var(--glass-border-dark, rgba(255,255,255,0.08));
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.45);
+    }
+    #place-mbar .action-btn { width: 100%; margin: 0; }
+    @keyframes place-bar-in {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    body.place-ready main { padding-bottom: 88px; }
+
+    @media (min-width: 1024px) {
+      body.place-ready #place-mbar { display: none !important; }
+      body.place-ready #place-settings-section {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 40;
+        margin: 0;
+        padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+        max-height: 72vh;
+        overflow: auto;
+        background: rgba(255, 255, 255, 0.92);
+        border-top: 1px solid var(--glass-border-light, rgba(15,23,42,0.1));
+        backdrop-filter: blur(16px) saturate(160%);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        box-shadow: 0 -8px 30px rgba(15, 23, 42, 0.12);
+        animation: place-bar-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      [data-theme="dark"] body.place-ready #place-settings-section {
+        background: rgba(10, 13, 24, 0.92);
+        border-top-color: var(--glass-border-dark, rgba(255,255,255,0.08));
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.45);
+      }
+      body.place-ready #place-settings-section .place-fixed-inner {
+        max-width: 72rem;
+        margin-inline: auto;
+        padding-inline: 24px;
+      }
+      /* Trim vertical bulk of the pinned panel */
+      body.place-ready #place-settings-section .step-label { margin-bottom: 8px; }
+      body.place-ready #place-settings-section #process-btn { margin-top: 14px; }
+      body.place-ready main { padding-bottom: var(--place-pad, 240px); }
+    }
   </style>
 
   <script src="../vendor/tailwind-3.4.17.js?v=20260707f"></script>
@@ -304,7 +368,8 @@
     </section>
 
     <!-- ============ STEP 3: SETTINGS ============ -->
-    <section class="mb-5 sm:mb-6">
+    <section id="place-settings-section" class="mb-5 sm:mb-6">
+     <div class="place-fixed-inner">
       <div class="step-label">
         <span class="step-num">3</span>
         <span data-i18n="step.settings.title">تنظیمات</span>
@@ -378,7 +443,20 @@
       <p id="process-hint" class="text-center text-xs text-muted mt-2" data-i18n="action.hint">
         ابتدا یک قالب و حداقل یک تصویر اضافه کن
       </p>
+     </div>
     </section>
+
+    <!-- ============ MOBILE STICKY DOWNLOAD BAR (proxy for #process-btn) ============ -->
+    <div id="place-mbar" aria-hidden="true">
+      <div class="container mx-auto max-w-6xl">
+        <button id="place-mbar-btn" type="button" class="action-btn" disabled>
+          <span class="inline-flex items-center gap-2.5">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span data-i18n="action.process">پردازش و دانلود ZIP</span>
+          </span>
+        </button>
+      </div>
+    </div>
 
     <!-- ============ PROGRESS OVERLAY ============ -->
     <div id="progress-overlay" class="hidden" role="status" aria-live="polite">
@@ -417,5 +495,35 @@
   <script>window.__SW_PATH__ = '../sw.js';</script>
   <script defer src="../scripts/bundle.js?v=20260707f"></script>
   <script defer src="../scripts/pwa.js?v=20260707f"></script>
+
+  <!-- Sticky settings/download bar wiring (no bundle changes needed) -->
+  <script>
+    (function () {
+      var processBtn = document.getElementById('process-btn');
+      var mbarBtn = document.getElementById('place-mbar-btn');
+      var section = document.getElementById('place-settings-section');
+      if (!processBtn || !section) return;
+
+      // "Ready" = the real process button is enabled (frame + at least one image).
+      function syncReady() {
+        var ready = !processBtn.disabled;
+        document.body.classList.toggle('place-ready', ready);
+        if (mbarBtn) mbarBtn.disabled = processBtn.disabled;
+      }
+      new MutationObserver(syncReady).observe(processBtn, { attributes: true, attributeFilter: ['disabled'] });
+      syncReady();
+
+      // The mobile bar button just proxies the real one.
+      if (mbarBtn) mbarBtn.addEventListener('click', function () { processBtn.click(); });
+
+      // Desktop: reserve space so the pinned settings panel never covers content.
+      function measure() {
+        document.body.style.setProperty('--place-pad', (section.offsetHeight + 24) + 'px');
+      }
+      if ('ResizeObserver' in window) new ResizeObserver(measure).observe(section);
+      window.addEventListener('resize', measure);
+      measure();
+    })();
+  </script>
 </body>
 </html>

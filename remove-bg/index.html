@@ -98,7 +98,7 @@
   </script>
 
   <link rel="stylesheet" href="../styles/main.css?v=20260707f" />
-  <link rel="stylesheet" href="remove-bg.css?v=20260707f" />
+  <link rel="stylesheet" href="remove-bg.css?v=20260906a" />
 </head>
 
 <body class="font-sans antialiased min-h-screen selection:bg-cyan/30">
@@ -221,48 +221,77 @@
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="glass-card p-4 sm:p-5">
-        <div class="rbg-actions">
-          <button id="rbg-remove-btn" type="button" class="action-btn rbg-btn-lg">
-            <span class="btn-default inline-flex items-center gap-2.5">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/>
-              </svg>
-              <span data-i18n="rbg.remove">حذف پس‌زمینه</span>
-            </span>
-            <span class="btn-loading">
-              <span class="spinner-btn"></span>
-              <span data-i18n="rbg.busy">در حال پردازش…</span>
-            </span>
-          </button>
+      <!-- Tip (scrollable area, kept above the fixed action bar) -->
+      <p class="rbg-hint text-[11px] sm:text-xs text-muted mb-4 sm:mb-6" data-i18n="rbg.tip">
+        نکته: برای عکس‌هایی که پس‌زمینه‌شون یکدست و ساده‌ست (مثل عکس محصول روی سفید)، حالت بدون هوش مصنوعی سریع‌تره. برای سوژه‌های پیچیده «با هوش مصنوعی» رو بزن.
+      </p>
 
-          <button id="rbg-remove-ai-btn" type="button" class="action-btn rbg-btn-ai" data-i18n-title="rbg.aiTitle" title="اگه حالت ساده نتونست پس‌زمینه رو برداره، با هوش مصنوعی امتحان کن">
-            <span class="btn-default inline-flex items-center gap-2.5">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.6 1.6L21.5 17.5l-1.9.7L19 20l-.6-1.8L16.5 17.5l1.9-.9z"/>
-              </svg>
-              <span data-i18n="rbg.removeAi">با هوش مصنوعی</span>
-            </span>
-            <span class="btn-loading">
-              <span class="spinner-btn"></span>
-              <span data-i18n="rbg.busy">در حال پردازش…</span>
-            </span>
-          </button>
+      <!-- ============ FIXED ACTION BAR (edit + remove + download) ============ -->
+      <div class="rbg-actionbar">
+        <div class="rbg-actionbar-inner container mx-auto max-w-5xl">
 
-          <button id="rbg-download" type="button" class="action-btn rbg-btn-download" disabled>
-            <span class="btn-default inline-flex items-center gap-2.5">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>
+          <!-- Edit tools (operate on the original image) -->
+          <div class="rbg-edit-tools">
+            <span class="rbg-edit-label" data-i18n="rbg.edit.label">ویرایش</span>
+            <button id="rbg-crop-btn" type="button" class="rbg-tool-btn">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>
               </svg>
-              <span data-i18n="rbg.download">دانلود PNG</span>
-            </span>
-          </button>
+              <span data-i18n="rbg.edit.crop">برش</span>
+            </button>
+            <button id="rbg-flip-h-btn" type="button" class="rbg-tool-btn">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2v20" stroke-dasharray="3 3"/><path d="M8 6l-5 6 5 6z"/><path d="M16 6l5 6-5 6z"/>
+              </svg>
+              <span data-i18n="rbg.edit.flipH">قرینه افقی</span>
+            </button>
+            <button id="rbg-flip-v-btn" type="button" class="rbg-tool-btn">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12h20" stroke-dasharray="3 3"/><path d="M6 8l6-5 6 5z"/><path d="M6 16l6 5 6-5z"/>
+              </svg>
+              <span data-i18n="rbg.edit.flipV">قرینه عمودی</span>
+            </button>
+          </div>
+
+          <!-- Main actions -->
+          <div class="rbg-actions">
+            <button id="rbg-remove-btn" type="button" class="action-btn rbg-btn-lg">
+              <span class="btn-default inline-flex items-center gap-2.5">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/>
+                </svg>
+                <span data-i18n="rbg.remove">حذف پس‌زمینه</span>
+              </span>
+              <span class="btn-loading">
+                <span class="spinner-btn"></span>
+                <span data-i18n="rbg.busy">در حال پردازش…</span>
+              </span>
+            </button>
+
+            <button id="rbg-remove-ai-btn" type="button" class="action-btn rbg-btn-ai" data-i18n-title="rbg.aiTitle" title="اگه حالت ساده نتونست پس‌زمینه رو برداره، با هوش مصنوعی امتحان کن">
+              <span class="btn-default inline-flex items-center gap-2.5">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.6 1.6L21.5 17.5l-1.9.7L19 20l-.6-1.8L16.5 17.5l1.9-.9z"/>
+                </svg>
+                <span data-i18n="rbg.removeAi">با هوش مصنوعی</span>
+              </span>
+              <span class="btn-loading">
+                <span class="spinner-btn"></span>
+                <span data-i18n="rbg.busy">در حال پردازش…</span>
+              </span>
+            </button>
+
+            <button id="rbg-download" type="button" class="action-btn rbg-btn-download" disabled>
+              <span class="btn-default inline-flex items-center gap-2.5">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>
+                </svg>
+                <span data-i18n="rbg.download">دانلود PNG</span>
+              </span>
+            </button>
+          </div>
+
         </div>
-
-        <p class="rbg-hint text-[11px] sm:text-xs text-muted mt-3" data-i18n="rbg.tip">
-          نکته: برای عکس‌هایی که پس‌زمینه‌شون یکدست و ساده‌ست (مثل عکس محصول روی سفید)، حالت بدون هوش مصنوعی سریع‌تره. برای سوژه‌های پیچیده «با هوش مصنوعی» رو بزن.
-        </p>
       </div>
     </section>
 
@@ -275,10 +304,56 @@
     </footer>
   </main>
 
+  <!-- ============ CROP MODAL ============ -->
+  <div id="rbg-crop-modal" class="rbg-crop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="rbg-crop-title">
+    <div class="rbg-crop-backdrop" id="rbg-crop-backdrop"></div>
+    <div class="rbg-crop-dialog glass-card">
+      <div class="rbg-crop-head">
+        <span id="rbg-crop-title" class="rbg-crop-title" data-i18n="rbg.crop.title">برش تصویر</span>
+        <button id="rbg-crop-close" class="rbg-crop-close" aria-label="Close" title="بستن">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="rbg-crop-ratios">
+        <button type="button" class="rbg-crop-ratio active" data-ratio="free" data-i18n="rbg.crop.free">آزاد</button>
+        <button type="button" class="rbg-crop-ratio" data-ratio="orig" data-i18n="rbg.crop.orig">نسبت تصویر</button>
+        <button type="button" class="rbg-crop-ratio" data-ratio="1">۱:۱</button>
+        <button type="button" class="rbg-crop-ratio" data-ratio="1.33333">۴:۳</button>
+        <button type="button" class="rbg-crop-ratio" data-ratio="0.75">۳:۴</button>
+        <button type="button" class="rbg-crop-ratio" data-ratio="1.77778">۱۶:۹</button>
+      </div>
+
+      <div class="rbg-crop-stage" id="rbg-crop-stage">
+        <div class="rbg-crop-imgwrap" id="rbg-crop-imgwrap">
+          <img id="rbg-crop-img" alt="" draggable="false" />
+          <div id="rbg-crop-box" class="rbg-crop-box">
+            <span class="rbg-crop-handle" data-h="nw"></span>
+            <span class="rbg-crop-handle" data-h="n"></span>
+            <span class="rbg-crop-handle" data-h="ne"></span>
+            <span class="rbg-crop-handle" data-h="e"></span>
+            <span class="rbg-crop-handle" data-h="se"></span>
+            <span class="rbg-crop-handle" data-h="s"></span>
+            <span class="rbg-crop-handle" data-h="sw"></span>
+            <span class="rbg-crop-handle" data-h="w"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rbg-crop-foot">
+        <span id="rbg-crop-dims" class="rbg-crop-dims">—</span>
+        <div class="rbg-crop-foot-actions">
+          <button id="rbg-crop-cancel" type="button" class="btn-ghost text-sm" data-i18n="rbg.crop.cancel">لغو</button>
+          <button id="rbg-crop-apply" type="button" class="action-btn" data-i18n="rbg.crop.apply">اعمال برش</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container" class="fixed bottom-4 inset-x-3 sm:bottom-auto sm:top-4 sm:inset-x-auto sm:end-4 z-50 flex flex-col gap-2 sm:max-w-sm pointer-events-none" role="status" aria-live="polite" aria-atomic="false"></div>
 
   <script>window.__SW_PATH__ = '../sw.js';</script>
-  <script defer src="remove-bg.js?v=20260707f"></script>
+  <script defer src="remove-bg.js?v=20260906a"></script>
   <script defer src="../scripts/pwa.js?v=20260707f"></script>
 </body>
 </html>
